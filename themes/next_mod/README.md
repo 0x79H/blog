@@ -1,0 +1,1 @@
+简单改了下,[原地址](https://github.com/iissnan/hexo-theme-next)
