@@ -717,6 +717,36 @@ class|接口上注解
 * Tomcat等Servlet容器在启动之后将特定的数据传递到*SpringMVC*
 * 浏览器将其转换成从Tomcat或其他http服务器获得数据,展示给用户
 
+
+
+
+
+## 分页
+
+使用阿里巴巴的pagehelper即可,有中文文档
+
+
+
+
+
+
+## 一对多,多对一,多对多
+
+在实体类中设置某其他实体类变量即可实现多对多的功能
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 ## Mybatis Generator
 *maven*中添加*mybatis-generator-maven-plugin(org.mybatis.generator)*插件
 
