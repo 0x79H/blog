@@ -1,6 +1,6 @@
 title: Steam Web Tools 与 Steam Economy Enhancer 共存
 date: 2018-01-16 14:04:46
-tags: blog
+tags: [javascript,Steam,fix]
 ---
 steam常用脚本Steam Web Tools和Steam Economy Enhancer一起使用时,库存页面显示有冲突.此时仅需要将
 ```html

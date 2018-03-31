@@ -1,6 +1,6 @@
 title: 修复Airplane Mode Hid设备异常
 date: 2015-12-05 05:23:10
-tags: fix
+tags: [fix,windows]
 ---
 设备管理器中Insyde Airplane Mode HID Mini-Driver有感叹号，硬件id为ACPI\VEN_PNP&DEV_C000
 
@@ -19,3 +19,6 @@ tags: fix
 此文章基于以下驱动版本完成:1.4.0.3
 
 最新更新的1.4.0.4(签名日期2017-01-19)并未解决这个bug
+
+*2018-03-31更新*
+1.4.0.8(签名日期2017-06-28)已解决此问题 😏

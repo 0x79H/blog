@@ -118,6 +118,8 @@ public class Configuration_or_somefckingothernamebutendwithConfig{
     }
 }
 ```
+<!--2018-03-31-->
+btw: Scope标识此bean的作用域,常在多线程问题中使用.
 
 ### 什么时候该在xml里定义bean什么时候该用扫描
 

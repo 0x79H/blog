@@ -1,6 +1,6 @@
 title: 记一次诡异的ssh密钥登录失败
 date: 2018-03-31 01:21:55
-tags: linux
+tags: [linux,shell]
 ---
 问基友要了台服务器,密码与密钥均不能登陆.改了密码后可以登陆,但密钥依然不能登陆.
 
@@ -34,7 +34,9 @@ chmod 700 ~/.ssh
 chmod 600 ~/.ssh/authorized_keys
 ```
 
-退出登录,然而依然不能用密钥登陆...猜测是*sshd*配置问题.去sshd_config查看
+退出登录,然而依然不能用密钥登陆...
+<!--more-->
+猜测是*sshd*配置问题.去sshd_config查看
 
 ```bash
 #RSAAuthentication yes

@@ -1,6 +1,6 @@
 title: vs2017 rc 初体验
 date: 2016-12-04 20:07:28
-tags: Misc
+tags: [windows,VisualStudio]
 ---
 早几日听说vs2017 Rc已经可以[下载](https://www.visualstudio.com/vs/visual-studio-2017-rc/)了，今日下载了下来玩了下。
 ## 默认全部在线安装

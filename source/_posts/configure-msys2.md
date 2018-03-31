@@ -1,6 +1,6 @@
 ﻿title: Windows下好用的shell--msys2
 date: 2017-07-15 22:40:26
-tags: blog
+tags: [linux,shell,windows]
 ---
 对于我这个linux伪粉来说,Windows下的cmd真的难用.在对比了多种同类型的工具(Gow,cygwin等)后,我选择了msys2.
 ## 安装

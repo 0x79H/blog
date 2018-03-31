@@ -33,41 +33,45 @@ tags: blog
 
 ## github的推送设置
 首先安装组件
-	```bash
-	npm install hexo-deployer-git
-	```
+```bash
+npm install hexo-deployer-git
+```
 然后设置git仓库信息
-	```
-	deploy:
-	type: git
-	repo: git@github.com:XXX:XXX.github.io.git
-	branch: master
-	message: update
-	```
-这样就可以用**hexo d**来推送到github了(其实本质就是推送./public/的所有文件到github)
+```
+deploy:
+type: git
+repo: git@github.com:XXX:XXX.github.io.git
+branch: master
+message: update
+```
+这样就可以用**hexo d**来推送到github了(其实本质就是<!--2018-03-31修改--> ~~推送./public/的所有文件~~**复制./public/的文件到./.deploy_git/并推送**到github)
 
 ## 域名绑定:
 暂时是直接
-	```bash
-	echo blog.qwerdf.com >./blog/public/CNAME
-	```
+```bash
+echo blog.qwerdf.com >./blog/public/CNAME
+```
 然后设置A记录到github
 ## 平时怎么用?
-	```bash
-	hexo new "标题"
-	vim ./blog/source/_posts/标题.md
-	```
+
+```bash
+hexo new "标题"
+vim ./blog/source/_posts/标题.md
+```
+
 然后
-	```bash
-	hexo clean
-	hexo g
-	hexo d
-	```
+
+```bash
+hexo clean
+hexo g
+hexo d
+```
+
 ## 常用hexo命令
-	```bash
-	hexo s --debug
-	hexo clean&&hexo g&&hexo g&&hexo d
-	```
+```bash
+hexo s --debug
+hexo clean&&hexo g&&hexo g&&hexo d
+```
 使用两次**hexo g**是因为有时生成的主页[有问题](https://github.com/iissnan/hexo-theme-next/issues/482),首页仅显示一篇文章。
 
 最后表示终于**有时间**来干这事了

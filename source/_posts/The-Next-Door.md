@@ -1,6 +1,6 @@
 ﻿title: The Next Door
 date: 2017-07-17 01:35:48
-tags: game 
+tags: [Steam,game]
 ---
 今天随机到的游戏是"The Next Door".
 <iframe src="https://store.steampowered.com/widget/447850/" style="border:none;height:190px;width:100%;max-width:646px;"></iframe>

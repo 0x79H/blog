@@ -1,6 +1,6 @@
 title: 修复由于WAN_Miniport导致的网络问题
 date: 2016-02-04 13:58:09
-tags: fix
+tags: [windows,fix]
 ---
 在硬件管理器中出现了’WAN_Miniport（\*）'，这六个理论上应该是 ~~隐藏的，~~ 没有错误的，但是有时候就会莫名其妙的出现好几个 WAN Miniport (IPv6 L2TP Network_Monitor PPPOE PPTP SSTP)，出现的原因很多，不过我见过的最多的就是xxx加速器/校园宽带客户端引起的。
 

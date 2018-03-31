@@ -1,6 +1,6 @@
 ﻿title: Socxel | Pixel Soccer
 date: 2017-07-19 15:41:11
-tags: game
+tags: [Steam,game]
 ---
 今天随机到的游戏是Socxel | Pixel Soccer
 <iframe src="https://store.steampowered.com/widget/586190/" style="border:none;height:190px;width:100%;max-width:646px;"></iframe>
