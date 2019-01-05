@@ -42,7 +42,7 @@ highlight:
   enable: true
   line_number: true
   auto_detect: true
-  tab_replace:
+  tab_replace: true
 
 # Category & Tag
 default_category: uncategorized
@@ -74,10 +74,3 @@ deploy:
   repository: git@github.com:0x79H/0x79h.github.io.git
   branch: master
   
-- type:baidu_url_submitter
-
-baidu_url_submit:
- count: 3
- host: blog.qwerdf.com
- token: 1gslA5QPlq0DqA2u
- path: baidu_urls.txt

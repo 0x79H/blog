@@ -15,7 +15,7 @@ tags: [security,windows,game]
 
 是个人都会的搜索-->改变数值-->继续搜索-->改变数值-->再搜索-->找到地址。
 
-关键的步骤来了：找到正确地址后，通过下内存读取/内存写入断点找到修改此资源的汇编语句，通过该汇编语句寻找该地址的基地址与偏移量，并在此地址附近寻找有关资源数据。
+找到正确地址后，通过下内存读取/内存写入断点找到修改此资源的汇编语句，通过该汇编语句寻找该地址的基地址与偏移量，并在此地址附近寻找有关资源数据。
 
 ## 寻找资源地址的基地址与偏移量
 
@@ -38,9 +38,9 @@ tags: [security,windows,game]
 
 ## 直接patch文件
 
-直接修改文件，实现硬补丁。一般常见于游戏的"未加密版"与软件的"无限制版"上。
+直接修改文件，实现硬补丁。
 
-## 使用调试函数来进行内存的修改
+## 外部来进行内存的修改
 
 即是使用如下三个函数
 
@@ -48,24 +48,24 @@ tags: [security,windows,game]
 - ReadProcessMemory
 - WriteProcessMemory
 
-获取该程序运行后的基地址可以使用[这个办法](https://stackoverflow.com/questions/14467229/get-base-address-of-process)
+内存中的基地址可以使用```OpenProcess --> EnumProcessModules --> GetModuleFileNameEx --> GetModuleInformation```来获取
+获取该程序运行后的基地址可以使用[这个办法]()
 
-## 通过注入DLL到进程来进行相关操作
+## 通过注入DLL来修改自身
 
-注入了DLL后既可以修改内存，还可以调用游戏内现有的功能CALL。简直就是为所欲为。
+注入了DLL后，就是被注入的进程的一部分了，想怎么搞怎么搞，简直就是为所欲为。
 
-我使用过的注入方法只有```CreateRemoteThread --> LoadLibrary```和```SetWindowsHookEx```
+最基础的就是```VirtualAllocEx --> CreateRemoteThread/NtCreateThreadEx/RtlCreateUserThread --> LoadLibrary```，然后dll里在DLLMain内调相应的函数。
 
-更多的注入方法有：NtCreateThreadEx/QueueUserAPC/RtlCreateUserThread/SetThreadContext/反射式DLL
+## 上驱动修改内存
 
-```CreateRemoteThread --> LoadLibrary```就是字面意思，给指定进程创建一个新的线程，新的线程里进行载入DLL的操作
+ring0下想怎么搞就怎么搞，甚至还能无视ring3下的检测。
 
-```SetWindowsHookEx```也是字面意思，在系统层面hook住相关函数，从而操作指定进程的流程。
-
-
-# <p style="font-size:16px">参考资料</p>
+# <span style="font-size:14px">参考资料</span>
 
 
 [injectAllTheThings](https://github.com/fdiskyou/injectAllTheThings)
 
 [CE Forum](http://forum.cheatengine.org/)
+
+[Get base address of process](https://stackoverflow.com/questions/14467229/get-base-address-of-process)

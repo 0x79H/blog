@@ -67,6 +67,8 @@ hexo g
 hexo d
 ```
 
+其中代码语法高亮的语言可参考[highlightjs docs](https://highlightjs.readthedocs.io/en/latest/css-classes-reference.html#language-names-and-aliases)
+
 ## 常用hexo命令
 ```bash
 hexo s --debug
