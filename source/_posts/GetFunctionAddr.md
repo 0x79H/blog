@@ -29,12 +29,12 @@ PDWORD _Name = (PDWORD)(_base_addr + pexports->AddressOfNames);
 PDWORD _NameOrdinals = (PWORD)(_base_addr + pexports->AddressOfNameOrdinals);
 
 for (DWORD i = 0; i < pexports->NumberOfNames; i++) {
-//甚至你还可以用hash比较,来隐藏函数名的明文字符串,就像merter
-//if (_hash_calc(_base_addr + _Name[i]) == _hash_calc(<FunctionName>)) {
-	if (!strcmp(_base_addr + _Name[i], <FunctionName>)) {
-		_addr = _base_addr + _Function[_NameOrdinals[i]];
-		break;
-	}
+    //甚至你还可以用hash比较,来隐藏函数名的明文字符串,就像meterpreter
+    //if (_hash_calc(_base_addr + _Name[i]) == _hash_calc(<FunctionName>)) {
+    if (!strcmp(_base_addr + _Name[i], <FunctionName>)) {
+        _addr = _base_addr + _Function[_NameOrdinals[i]];
+        break;
+    }
 }
 ```
 
@@ -47,21 +47,21 @@ PDWORD _base_addr;
 LPWSTR _dll_name = nullptr;
 PLIST_ENTRY pList;
 __asm {
-	mov eax, fs:[0x30]    //dt nt!_peb
-	mov eax, [eax + 0x0c] //dt nt!_PEB_LDR_DATA
-	add eax, 0x00c        //dt nt!_LDR_DATA_TABLE_ENTRY
-	mov pList, eax
+    mov eax, fs:[0x30]    //dt nt!_peb
+    mov eax, [eax + 0x0c] //dt nt!_PEB_LDR_DATA
+    add eax, 0x00c        //dt nt!_LDR_DATA_TABLE_ENTRY
+    mov pList, eax
 }
 PDWORD pFlag = (PDWORD)(pList->Blink);
 do
 {
-	pList = pList->Flink;
-	_base_addr = (PDWORD)((DWORD)pList + 0x018);
-	_dll_name = (LPWSTR)(*(PDWORD)((DWORD)pList + 0x2c + 0x4));
-	if(!wcscmp(_dll_name,<DllName>))
-	{
-		break;
-	}
+    pList = pList->Flink;
+    _base_addr = (PDWORD)((DWORD)pList + 0x018);
+    _dll_name = (LPWSTR)(*(PDWORD)((DWORD)pList + 0x2c + 0x4));
+    if(!wcscmp(_dll_name,<DllName>))
+    {
+        break;
+    }
 
 } while (pFlag != (PDWORD)pList);
 ```

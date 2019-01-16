@@ -28,19 +28,9 @@ root@kali:~/Desktop/zabbix-4.0.3# make&&make install
 root@kali:~/Desktop/zabbix-4.0.3# zabbix_agentd -V
 zabbix_agentd (daemon) (Zabbix) 4.0.3
 Revision 87993 20 December 2018, compilation time: Jan  5 2019 14:02:48
-
-Copyright (C) 2018 Zabbix SIA
-License GPLv2+: GNU GPL version 2 or later <http://gnu.org/licenses/gpl.html>.
-This is free software: you are free to change and redistribute it according to
-the license. There is NO WARRANTY, to the extent permitted by law.
 root@kali:~/Desktop/zabbix-4.0.3# zabbix_server -V
 zabbix_server (Zabbix) 4.0.3
 Revision 87993 20 December 2018, compilation time: Jan  5 2019 14:02:48
-
-Copyright (C) 2018 Zabbix SIA
-License GPLv2+: GNU GPL version 2 or later <http://gnu.org/licenses/gpl.html>.
-This is free software: you are free to change and redistribute it according to
-the license. There is NO WARRANTY, to the extent permitted by law.
 ```
 ## 配置zabbix_server
 zabbix server简单来说就是管理服务器的服务器
