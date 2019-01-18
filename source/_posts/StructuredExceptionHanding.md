@@ -1,4 +1,4 @@
-title: SEH学习
+title: SEH
 date: 2019-01-16 19:03:10
 tags: [windows,shellcode]
 ---
@@ -26,7 +26,7 @@ int main()
             mov [eax], 0
         };
     }
-    __except(1){
+    __except(EXCEPTION_EXECUTE_HANDLER){
         MessageBox(NULL, NULL, NULL, NULL);
     }
 }
@@ -48,7 +48,7 @@ winseh!main [c:\users\root\source\repos\winseh\winseh\winseh.cpp @ 9]:
 010f1021 3145f8          xor     dword ptr [ebp-8],eax
 010f1024 33c5            xor     eax,ebp
 010f1026 50              push    eax
-010f1027 8d45f0          lea     eax,[ebp-10h]                <--第5个push
+010f1027 8d45f0          lea     eax,[ebp-10h]                <--0x010f1015
 010f102a 64a300000000    mov     dword ptr fs:[00000000h],eax <--SEH链最后的结构地址
 010f1030 8965e8          mov     dword ptr [ebp-18h],esp
 010f1033 8b0d34200f01    mov     ecx,dword ptr [winseh!_imp_?coutstd (010f2034)]
