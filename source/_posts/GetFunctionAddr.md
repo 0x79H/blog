@@ -86,7 +86,7 @@ do
 ### 暴力搜索PE头
 如果DLL被断链,据我了解,只能使用此种方法.
 因为DLL被加载时,pe装载器会把DLL装载进内存的,所以我们只需要暴力搜索pe的文件头**MZ**,即可获取基地址.(当然,文件头不能被抹除)
-又因为pe装载器内存是1k对齐的(SectionAlignment),所以我们只需要以4k为单位搜索即可.如果已知DLL内函数的地址,那就更容易搜索出来了.例如最外层SEH即指向kernel32.dll的
+又因为pe装载器内存是1k对齐的(SectionAlignment),所以我们只需要以1k为单位搜索即可.如果已知DLL内函数的地址,那就更容易搜索出来了.例如最外层SEH即指向kernel32.dll的
 ```
 PDWORD addr = (PDWORD)GetProcAddress;
 addr = (PDWORD)((DWORD)addr & 0xfffff000);
