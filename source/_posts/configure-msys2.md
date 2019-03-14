@@ -43,6 +43,13 @@ sh -c "$(wget https://raw.github.com/robbyrussell/oh-my-zsh/master/tools/install
 ```
 SHELL=/usr/bin/zsh```
 
+## 安装中文man
+```
+wget https://www.archlinux.org/packages/community/any/man-pages-zh_cn/download/
+pacman -U man-pages-zh_cn-1.6.3.3-1-any.pkg.tar.xz
+```
+
+
 ## 其他杂项
 于.bashrc内取消大部分注释
 于pacman.conf内添加ILoveCandy😄
