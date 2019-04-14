@@ -15,7 +15,9 @@ tcpdump直接抓
 垃圾红米手机和win10配不上.
 
 ## 管道法
-老早之前记得看过有人用pipe来将抓包的数据实时重定向到wireshark,找了找,发现了[这篇文章](https://www.freebuf.com/articles/wireless/6517.html).既是用ADVsock2pipe来将Android转发来的socket重定向为一个pipe,让wireshark认为是一个设备.
+老早之前记得看过有人用pipe来将抓包的数据实时重定向到wireshark.
+<!--more-->
+找了找,发现了[这篇文章](https://www.freebuf.com/articles/wireless/6517.html).既是用ADVsock2pipe来将Android转发来的socket重定向为一个pipe,让wireshark认为是一个设备.
 ```
 tcpdump -nn -w - -U -s 0 -i wlan0 | nc <ip> 6666
 ADVsock2pipe.exe -pipe=pipeName -port 6666
