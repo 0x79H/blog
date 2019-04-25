@@ -66,8 +66,10 @@ make
 **直接在./configure的时候加上--enable-remote即可**
 
 ### arm
+选择arm编译器:
 - [ ] gcc-arm-linux-androideabi
 - [x] gcc-arm-linux-gnueabi
+
 指定host就完事了
 ```
 apt-get install gcc-arm-linux-gnueabi g++-arm-linux-gnueabi
@@ -85,10 +87,12 @@ riva:/data/local/tmp # ./rpcapd4
 ```
 此时并不能运行,偷一下Makefile编译的命令行,然后上static静态编译即可
 ```
-0x79h@ubuntu:~/work/libpcap/rpcapd$arm-linux-gnueabi-gcc -fvisibility=hidden -g -O2 -o rpcapd daemon.o fileconf.o log.o rpcapd.o ../rpcap-protocol.o \
-  ../sockutils.o ../fmtutils.o ../sslutils.o ../libpcap.a -lcrypt -lpthread
+0x79h@ubuntu:~/work/libpcap/rpcapd$arm-linux-gnueabi-gcc -fvisibility=hidden -g -O2 -o rpcapd daemon.o \
+    fileconf.o log.o rpcapd.o ../rpcap-protocol.o ../sockutils.o ../fmtutils.o ../sslutils.o ../libpcap.a\
+    -lcrypt -lpthread -static
 0x79h@ubuntu:~/work/libpcap/rpcapd$ file rpcapd
-rpcapd: ELF 32-bit LSB executable, ARM, EABI5 version 1 (SYSV), statically linked, for GNU/Linux 3.2.0, BuildID[sha1]=aefc4fd77f1c82b86f103ec4f926b5af2fad787a, not stripped
+rpcapd: ELF 32-bit LSB executable, ARM, EABI5 version 1 (SYSV), statically linked, for GNU/Linux 3.2.0,\
+    BuildID[sha1]=aefc4fd77f1c82b86f103ec4f926b5af2fad787a, not stripped
 0x79h@ubuntu:~/work/libpcap/rpcapd$ upx rpcapd
                        Ultimate Packer for eXecutables
                           Copyright (C) 1996 - 2013
