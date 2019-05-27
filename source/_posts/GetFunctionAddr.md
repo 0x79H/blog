@@ -15,7 +15,7 @@ PDWORD _addr = (PDWORD)GetProcAddress(LoadLibrary(<DllName>), <FunctionName>);
 <!--more-->
 ## 隐藏 GetProcAddress
 
-使用pe头,mz头->pe头->导入表->遍历->比较Name->获得NameOrdinals->取Functions,得到函数在内存中基地址的偏移量
+使用pe头,mz头->pe头->导出表->遍历->比较Name->获得NameOrdinals->取Functions,得到函数在内存中基地址的偏移量
 
 ```C
 PDWORD _addr = nullptr;
@@ -108,7 +108,7 @@ while (true)
 }
 ```
 # ShellCode
-待续
+随便找个分析下就有了
 
 # 杂项
 * 有说可以使用SEH搜索kernel32.dll,尝试后发现SEH调用的是ntdll的函数,搜索出来的是ntdll.dll的基地址
