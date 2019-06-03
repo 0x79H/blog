@@ -1,6 +1,6 @@
 ﻿title: Windows下好用的shell--msys2
 date: 2017-07-15 22:40:26
-tags: [linux,shell,windows]
+tags: [linux,shell,windows，msys2]
 ---
 对于我这个linux伪粉来说,Windows下的cmd真的难用.在对比了多种同类型的工具(Gow,cygwin等)后,我选择了msys2.
 ## 安装
@@ -52,7 +52,7 @@ pacman -U man-pages-zh_cn-1.6.3.3-1-any.pkg.tar.xz
 
 ## 其他杂项
 于.bashrc内取消大部分注释
-于pacman.conf内添加ILoveCandy😄
+于pacman.conf内删除`CheckSpace`并添加`ILoveCandy`😄
 
 ## 参考链接
 https://wiki.archlinux.org/index.php/Pacman
