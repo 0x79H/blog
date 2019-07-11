@@ -833,7 +833,7 @@ class|接口上注解
 [](http://wiki.jikexueyuan.com/project/ssh-noob-learning/package.html)
 
 
-[Spring 框架的 AOP - Spring 教程 - 极客学院 Wiki](wiki.jikexueyuan.com/project/spring/aop-with-spring.html)
+[Spring 框架的 AOP - Spring 教程 - 极客学院 Wiki](http://wiki.jikexueyuan.com/project/spring/aop-with-spring.html)
 
 [](https://www.tianmaying.com/tutorial/spring-mvc-quickstart)
 

@@ -13,3 +13,5 @@ win10不断要求认证账户,认证要求输入pin码,输入完后没问题,过
 CheckNetIsolation LoopbackExempt -a -n Microsoft.Windows.CloudExperienceHost_cw5n1h2txyewy
 ```
 或者直接抄起fiddler出的[EnableLoopback Utility](https://telerik-fiddler.s3.amazonaws.com/fiddler/addons/enableloopbackutility.exe)点两下即可
+
+如还是不行,运行`wsreset.exe`，对store商店进行重置即可。
