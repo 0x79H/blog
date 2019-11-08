@@ -3,7 +3,7 @@ date: 2019-09-27 17:27:13
 tags: [nodejs, docker]
 ---
 tl;dr
-> require.extensions['ext']参考require的内部流程,可以自定义require的流程
+> 参考require的函数内部流程,通过`require.extensions['ext']`可以自定义require的流程
 
 
 简单来说,就是因为有个程序有bug,懒得反馈官方,我朋友让我大概在半年前看了个nodejs写的东西.
