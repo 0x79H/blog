@@ -29,7 +29,7 @@
 
 
 {% if theme.use_font_lato %}
-  <link href="//fonts.css.network/css?family=Lato:300,400,700,400italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  <link href="//ajax.loli.net/css?family=Lato:300,400,700,400italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
 {% endif %}
 
 
