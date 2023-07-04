@@ -42,7 +42,7 @@ highlight:
   enable: true
   line_number: true
   auto_detect: true
-  tab_replace: true
+#  tab_replace: true
 
 # Category & Tag
 default_category: uncategorized
@@ -72,7 +72,7 @@ pagination_dir: page
 # Extensions
 ## Plugins: http://hexo.io/plugins/
 ## Themes: http://hexo.io/themes/
-theme: next_mod
+theme: next
 
 # Deployment
 ## Docs: http://hexo.io/docs/deployment.html
