@@ -79,6 +79,6 @@ theme: next
 deploy:
 - type: git
   message: update
-  repo: git@github.com:0x79H/0x79h.github.io.git
-  branch: master
+  repo: git@github.com:0x79H/blog
+  branch: gh-pages
   
