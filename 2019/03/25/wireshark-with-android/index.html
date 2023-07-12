@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <meta http-equiv="Cache-Control" content="no-transform">
+  <meta http-equiv="Cache-Control" content="no-siteapp">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"blog.qwerdf.com","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="缘由一个apk,上burp死活抓不到数据包,应用还正常.想开wifi热点抓,结果我那破红米不支持5g,win10的热点老是开到5g上,行不通,只能想其他方法. 非实时tcpdump直接抓但是不够优雅,不能实时反应过来,而且也没wireshark易用 实时wifi热点法垃圾红米手机和win10配不上. 管道法老早之前记得看过有人用pipe来将抓包的数据实时重定向到wireshark.">
+<meta property="og:type" content="article">
+<meta property="og:title" content="实时抓取Android上的网卡数据包">
+<meta property="og:url" content="https://blog.qwerdf.com/2019/03/25/wireshark-with-android/index.html">
+<meta property="og:site_name" content="zzzZZZ">
+<meta property="og:description" content="缘由一个apk,上burp死活抓不到数据包,应用还正常.想开wifi热点抓,结果我那破红米不支持5g,win10的热点老是开到5g上,行不通,只能想其他方法. 非实时tcpdump直接抓但是不够优雅,不能实时反应过来,而且也没wireshark易用 实时wifi热点法垃圾红米手机和win10配不上. 管道法老早之前记得看过有人用pipe来将抓包的数据实时重定向到wireshark.">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2019-03-25T09:08:03.000Z">
+<meta property="article:modified_time" content="2023-07-12T18:12:00.723Z">
+<meta property="article:author" content="xz">
+<meta property="article:tag" content="linux">
+<meta property="article:tag" content="Android">
+<meta property="article:tag" content="arm64">
+<meta property="article:tag" content="wireshark">
+<meta property="article:tag" content="tcpdump">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="https://blog.qwerdf.com/2019/03/25/wireshark-with-android/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'en'
+  };
+</script>
+
+  <title>实时抓取Android上的网卡数据包 | zzzZZZ</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-88654486-1"></script>
+    <script>
+      if (CONFIG.hostname === location.hostname) {
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'UA-88654486-1');
+      }
+    </script>
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">zzzZZZ</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="https://blog.qwerdf.com/2019/03/25/wireshark-with-android/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/uploads/main.jpg">
+      <meta itemprop="name" content="xz">
+      <meta itemprop="description" content="Some Place where I can write something<br>总有一天你们会求我更博客的">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="zzzZZZ">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          实时抓取Android上的网卡数据包
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2019-03-25 17:08:03" itemprop="dateCreated datePublished" datetime="2019-03-25T17:08:03+08:00">2019-03-25</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2023-07-13 02:12:00" itemprop="dateModified" datetime="2023-07-13T02:12:00+08:00">2023-07-13</time>
+              </span>
+
+          
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Disqus: </span>
+    
+    <a title="disqus" href="/2019/03/25/wireshark-with-android/#disqus_thread" itemprop="discussionUrl">
+      <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2019/03/25/wireshark-with-android/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h1 id="缘由"><a href="#缘由" class="headerlink" title="缘由"></a>缘由</h1><p>一个apk,上burp死活抓不到数据包,应用还正常.<br>想开wifi热点抓,结果我那破红米不支持5g,win10的热点老是开到5g上,行不通,只能想其他方法.</p>
+<h1 id="非实时"><a href="#非实时" class="headerlink" title="非实时"></a>非实时</h1><p>tcpdump直接抓<br>但是不够优雅,不能实时反应过来,而且也没wireshark易用</p>
+<h1 id="实时"><a href="#实时" class="headerlink" title="实时"></a>实时</h1><h2 id="wifi热点法"><a href="#wifi热点法" class="headerlink" title="wifi热点法"></a>wifi热点法</h2><p>垃圾红米手机和win10配不上.</p>
+<h2 id="管道法"><a href="#管道法" class="headerlink" title="管道法"></a>管道法</h2><p>老早之前记得看过有人用pipe来将抓包的数据实时重定向到wireshark.</p>
+<span id="more"></span>
+<p>找了找,发现了<a target="_blank" rel="noopener" href="https://www.freebuf.com/articles/wireless/6517.html">这篇文章</a>.既是用ADVsock2pipe来将Android转发来的socket重定向为一个pipe,让wireshark认为是一个设备.</p>
+<figure class="highlight apache"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="attribute">tcpdump</span> -nn -w - -U -s <span class="number">0</span> -i wlan0 | nc &lt;ip&gt; <span class="number">6666</span></span><br><span class="line"><span class="attribute">ADVsock2pipe</span>.exe -pipe=pipeName -port <span class="number">6666</span></span><br><span class="line"><span class="section">&lt; choose \\.\pipe\pipeName in wireshark &gt;</span></span><br></pre></td></tr></table></figure>
+
+
+<h2 id="socket法"><a href="#socket法" class="headerlink" title="socket法"></a>socket法</h2><p>就是把pipe换成了nc接受后重定向</p>
+<figure class="highlight apache"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="attribute">tcpdump</span> -n -s <span class="number">0</span> -i wlan0 -w -| nc -l -p <span class="number">7101</span></span><br><span class="line"><span class="attribute">adb</span> forward tcp:<span class="number">6100</span> tcp:<span class="number">7101</span></span><br><span class="line"><span class="attribute">D</span>:\backup\tools\msys64\usr\bin\nc.exe <span class="number">127.0.0.1</span> <span class="number">6100</span> | <span class="string">&quot;C:\Program Files\Wireshark\wireshark.exe&quot;</span> -k -S -i -</span><br></pre></td></tr></table></figure>
+
+<h2 id="RPCAP协议法"><a href="#RPCAP协议法" class="headerlink" title="RPCAP协议法"></a>RPCAP协议法</h2><p>在wireshark里发现了**<a target="_blank" rel="noopener" href="https://www.wireshark.org/docs/wsug_html_chunked/ChCapInterfaceRemoteSection.html">Remote Capture Interfaces</a>**,直接填tcpdump重定向过来的socket是不行的,查了查,发现是用了一种叫做<a target="_blank" rel="noopener" href="http://rpcap.sourceforge.net/">rpcap</a>的玩意.直接交叉编译相应的版本丢过去运行就ok了.<br>分别找到并尝试了以下版本</p>
+<figure class="highlight awk"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># winpcap (libpcap1.0.0)</span></span><br><span class="line">wget https:<span class="regexp">//</span>www.winpcap.org<span class="regexp">/install/</span>bin/WpcapSrc_4_1_3.zip</span><br><span class="line">unzip -a WpcapSrc_4_1_3.zip</span><br><span class="line">cd winpcap<span class="regexp">/wpcap/</span>libpcap</span><br><span class="line"><span class="comment"># tcpdump lastest version (libpcap 1.9.0)</span></span><br><span class="line">wget https:<span class="regexp">//</span>www.tcpdump.org<span class="regexp">/release/</span>libpcap-<span class="number">1.9</span>.<span class="number">0</span>.tar.gz</span><br><span class="line">tar -xzvf libpcap-<span class="number">1.9</span>.<span class="number">0</span>.tar.gz</span><br><span class="line">cd libpcap-<span class="number">1.9</span>.<span class="number">0</span> </span><br><span class="line"><span class="comment"># github (libpcap 1.10.0-PRE-GIT) 20190418</span></span><br><span class="line">git clone https:<span class="regexp">//gi</span>thub.com<span class="regexp">/the-tcpdump-group/</span>libpcap.git</span><br><span class="line">cd libpcap</span><br></pre></td></tr></table></figure>
+
+<h3 id="ubuntu-x86-64"><a href="#ubuntu-x86-64" class="headerlink" title="ubuntu x86_64"></a>ubuntu x86_64</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">sudo apt-get install libbluetooth-dev -y </span><br><span class="line"><span class="built_in">cd</span> winpcap/libpcap</span><br><span class="line">./configure &amp;&amp; make </span><br><span class="line"><span class="built_in">cd</span> rpcap</span><br><span class="line">sed -i -e <span class="string">&#x27;s/\(-ldbus-1\)/\1 -lcrypt/g&#x27;</span> -e <span class="string">&#x27;s/\.\(\.\/rpcap\)/\1/g&#x27;</span> \</span><br><span class="line">    -e <span class="string">&#x27;s/\.\(\.\/sockut\)/\1/g&#x27;</span> -e <span class="string">&#x27;s/\.\(\.\/sslut\)/\1/g&#x27;</span> Makefile</span><br><span class="line">make</span><br><span class="line">./rpcap</span><br></pre></td></tr></table></figure>
+
+<p>理论上可以用<em>configure</em>来直接设置好<em>Makefile</em>的内容,但是**–with-libs**只能解决一部分问题,其余不清楚怎么解决.索性直接上sed了.<br><strong>直接在.&#x2F;configure的时候加上–enable-remote即可</strong></p>
+<h3 id="arm"><a href="#arm" class="headerlink" title="arm"></a>arm</h3><p>选择arm编译器:</p>
+<ul>
+<li><input disabled="" type="checkbox"> gcc-arm-linux-androideabi</li>
+<li><input checked="" disabled="" type="checkbox"> gcc-arm-linux-gnueabi</li>
+</ul>
+<p>指定host就完事了</p>
+<figure class="highlight routeros"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">apt-<span class="built_in">get</span> install gcc-arm-linux-gnueabi g++-arm-linux-gnueabi</span><br><span class="line">./configure <span class="attribute">--host</span>=arm-linux-gnueabi --enable-remote</span><br><span class="line">make</span><br></pre></td></tr></table></figure>
+<p>dynamically linked的rpcapd</p>
+<figure class="highlight gradle"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="number">0</span>x79h@ubuntu:~<span class="regexp">/work/</span>libpcap/rpcapd$ <span class="keyword">file</span> rpcapd</span><br><span class="line">rpcapd: ELF <span class="number">32</span>-bit LSB executable, ARM, EABI5 version <span class="number">1</span> (SYSV), dynamically linked, interpreter <span class="regexp">/lib/</span>ld-linux.so.<span class="number">3</span>,\</span><br><span class="line">  <span class="keyword">for</span> GNU/Linux <span class="number">3.2</span>.<span class="number">0</span>, BuildID[sha1]=<span class="number">1510</span>cf4facd84b9e9bbb325f0e94313a1733b73e, not stripped</span><br><span class="line"></span><br><span class="line">riva:<span class="regexp">/data/</span>local<span class="regexp">/tmp # ./</span>rpcapd4</span><br><span class="line"><span class="regexp">/system/</span>bin<span class="regexp">/sh: ./</span>rpcapd4: No such <span class="keyword">file</span> or directory</span><br></pre></td></tr></table></figure>
+<p>此时并不能运行,偷一下Makefile编译的命令行,然后上static静态编译即可</p>
+<figure class="highlight elixir"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="number">0x79</span>h<span class="variable">@ubuntu</span><span class="symbol">:~/work/libpcap/rpcapd</span><span class="variable">$arm</span>-linux-gnueabi-gcc -fvisibility=hidden -g -<span class="title class_">O2</span> -o rpcapd daemon.o \</span><br><span class="line">    fileconf.o log.o rpcapd.o ../rpcap-protocol.o ../sockutils.o ../fmtutils.o ../sslutils.o ../libpcap.a\</span><br><span class="line">    -lcrypt -lpthread -static</span><br><span class="line"><span class="number">0x79</span>h<span class="variable">@ubuntu</span><span class="symbol">:~/work/libpcap/rpcapd</span><span class="variable">$ </span>file rpcapd</span><br><span class="line"><span class="symbol">rpcapd:</span> <span class="title class_">ELF</span> <span class="number">32</span>-bit <span class="title class_">LSB</span> executable, <span class="title class_">ARM</span>, <span class="title class_">EABI5</span> version <span class="number">1</span> (<span class="title class_">SYSV</span>), statically linked, <span class="keyword">for</span> <span class="title class_">GNU</span>/<span class="title class_">Linux</span> <span class="number">3.2</span>.<span class="number">0</span>,\</span><br><span class="line">    <span class="title class_">BuildID</span>[sha1]=aefc4fd77f1c82b86f103ec4f926b5af2fad787a, <span class="keyword">not</span> stripped</span><br><span class="line"><span class="number">0x79</span>h<span class="variable">@ubuntu</span><span class="symbol">:~/work/libpcap/rpcapd</span><span class="variable">$ </span>upx rpcapd</span><br><span class="line">                       <span class="title class_">Ultimate</span> <span class="title class_">Packer</span> <span class="keyword">for</span> eXecutables</span><br><span class="line">                          <span class="title class_">Copyright</span> (C) <span class="number">1996</span> - <span class="number">2013</span></span><br><span class="line"><span class="title class_">UPX</span> <span class="number">3.91</span>        <span class="title class_">Markus</span> <span class="title class_">Oberhumer</span>, <span class="title class_">Laszlo</span> <span class="title class_">Molnar</span> &amp; <span class="title class_">John</span> <span class="title class_">Reiser</span>   <span class="title class_">Sep</span> <span class="number">30</span>th <span class="number">2013</span></span><br><span class="line"></span><br><span class="line">        <span class="title class_">File</span> size         <span class="title class_">Ratio</span>      <span class="title class_">Format</span>      <span class="title class_">Name</span></span><br><span class="line">   --------------------   ------   -----------   -----------</span><br><span class="line">   <span class="number">2078356</span> -&gt;    <span class="number">901764</span>   <span class="number">43.39</span>%   linux/armel   rpcapd                        </span><br><span class="line"></span><br><span class="line"><span class="title class_">Packed</span> <span class="number">1</span> file.</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="symbol">riva:</span>/data/local/tmp <span class="comment"># ./x -n -D</span></span><br><span class="line"><span class="title class_">Press</span> <span class="title class_">CTRL</span> + C to stop the server...</span><br></pre></td></tr></table></figure>
+
+
+<h1 id="结果"><a href="#结果" class="headerlink" title="结果"></a>结果</h1><p>那破apk协议走的是udp,怪不得抓不到.</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/linux/" rel="tag"># linux</a>
+              <a href="/tags/Android/" rel="tag"># Android</a>
+              <a href="/tags/arm64/" rel="tag"># arm64</a>
+              <a href="/tags/wireshark/" rel="tag"># wireshark</a>
+              <a href="/tags/tcpdump/" rel="tag"># tcpdump</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2019/03/20/EasyToBypassAV/" rel="prev" title="Easy To Bypass AV">
+      <i class="fa fa-chevron-left"></i> Easy To Bypass AV
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2019/04/15/fix-win10-fix-your-account/" rel="next" title="修复win10总是提示验证您的账户">
+      修复win10总是提示验证您的账户 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    
+  <div class="comments">
+    <div id="disqus_thread">
+      <noscript>Please enable JavaScript to view the comments powered by Disqus.</noscript>
+    </div>
+  </div>
+  
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E7%BC%98%E7%94%B1"><span class="nav-number">1.</span> <span class="nav-text">缘由</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E9%9D%9E%E5%AE%9E%E6%97%B6"><span class="nav-number">2.</span> <span class="nav-text">非实时</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%AE%9E%E6%97%B6"><span class="nav-number">3.</span> <span class="nav-text">实时</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#wifi%E7%83%AD%E7%82%B9%E6%B3%95"><span class="nav-number">3.1.</span> <span class="nav-text">wifi热点法</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%AE%A1%E9%81%93%E6%B3%95"><span class="nav-number">3.2.</span> <span class="nav-text">管道法</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#socket%E6%B3%95"><span class="nav-number">3.3.</span> <span class="nav-text">socket法</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#RPCAP%E5%8D%8F%E8%AE%AE%E6%B3%95"><span class="nav-number">3.4.</span> <span class="nav-text">RPCAP协议法</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#ubuntu-x86-64"><span class="nav-number">3.4.1.</span> <span class="nav-text">ubuntu x86_64</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#arm"><span class="nav-number">3.4.2.</span> <span class="nav-text">arm</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E7%BB%93%E6%9E%9C"><span class="nav-number">4.</span> <span class="nav-text">结果</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="xz"
+      src="/uploads/main.jpg">
+  <p class="site-author-name" itemprop="name">xz</p>
+  <div class="site-description" itemprop="description">Some Place where I can write something<br>总有一天你们会求我更博客的</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">43</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">39</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2023</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">xz</span>
+</div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+<script>
+  function loadCount() {
+    var d = document, s = d.createElement('script');
+    s.src = 'https://tencentadmin.disqus.com/count.js';
+    s.id = 'dsq-count-scr';
+    (d.head || d.body).appendChild(s);
+  }
+  // defer loading until the whole page loading is completed
+  window.addEventListener('load', loadCount, false);
+</script>
+<script>
+  var disqus_config = function() {
+    this.page.url = "https://blog.qwerdf.com/2019/03/25/wireshark-with-android/";
+    this.page.identifier = "2019/03/25/wireshark-with-android/";
+    this.page.title = "实时抓取Android上的网卡数据包";
+    };
+  NexT.utils.loadComments(document.querySelector('#disqus_thread'), () => {
+    if (window.DISQUS) {
+      DISQUS.reset({
+        reload: true,
+        config: disqus_config
+      });
+    } else {
+      var d = document, s = d.createElement('script');
+      s.src = 'https://tencentadmin.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', '' + +new Date());
+      (d.head || d.body).appendChild(s);
+    }
+  });
+</script>
+
+</body>
+</html>

@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <meta http-equiv="Cache-Control" content="no-transform">
+  <meta http-equiv="Cache-Control" content="no-siteapp">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"blog.qwerdf.com","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="前言简单来说，pwn既是使用某种方法，修改内存中的数据，劫持程序的执行流程(即改变eip)，使程序执行我们的shellcode。shellcode可以简单理解为一串汇编代码对应的机器码，因为它通常就是用机器代码编写的。 对于call _fun与jmp _fun他们都会使eip变为对于_fun的地址；而对于ret它实际上就是pop eip，如果此时栈顶的数据为我们的shellcode的地址，就可以实">
+<meta property="og:type" content="article">
+<meta property="og:title" content="PWN学习">
+<meta property="og:url" content="https://blog.qwerdf.com/2018/12/31/overflow/index.html">
+<meta property="og:site_name" content="zzzZZZ">
+<meta property="og:description" content="前言简单来说，pwn既是使用某种方法，修改内存中的数据，劫持程序的执行流程(即改变eip)，使程序执行我们的shellcode。shellcode可以简单理解为一串汇编代码对应的机器码，因为它通常就是用机器代码编写的。 对于call _fun与jmp _fun他们都会使eip变为对于_fun的地址；而对于ret它实际上就是pop eip，如果此时栈顶的数据为我们的shellcode的地址，就可以实">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2018-12-31T14:53:11.000Z">
+<meta property="article:modified_time" content="2023-07-12T18:12:00.698Z">
+<meta property="article:author" content="xz">
+<meta property="article:tag" content="asm">
+<meta property="article:tag" content="security">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="https://blog.qwerdf.com/2018/12/31/overflow/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'en'
+  };
+</script>
+
+  <title>PWN学习 | zzzZZZ</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-88654486-1"></script>
+    <script>
+      if (CONFIG.hostname === location.hostname) {
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'UA-88654486-1');
+      }
+    </script>
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">zzzZZZ</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="https://blog.qwerdf.com/2018/12/31/overflow/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/uploads/main.jpg">
+      <meta itemprop="name" content="xz">
+      <meta itemprop="description" content="Some Place where I can write something<br>总有一天你们会求我更博客的">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="zzzZZZ">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          PWN学习
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2018-12-31 22:53:11" itemprop="dateCreated datePublished" datetime="2018-12-31T22:53:11+08:00">2018-12-31</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2023-07-13 02:12:00" itemprop="dateModified" datetime="2023-07-13T02:12:00+08:00">2023-07-13</time>
+              </span>
+
+          
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Disqus: </span>
+    
+    <a title="disqus" href="/2018/12/31/overflow/#disqus_thread" itemprop="discussionUrl">
+      <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2018/12/31/overflow/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h1 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h1><p>简单来说，pwn既是使用某种方法，修改内存中的数据，劫持程序的执行流程(即改变eip)，使程序执行我们的shellcode。shellcode可以简单理解为一串汇编代码对应的机器码，因为它通常就是用机器代码编写的。</p>
+<p>对于<em>call _fun</em>与<em>jmp _fun</em>他们都会使<em>eip</em>变为对于_fun的地址；而对于<em>ret</em>它实际上就是<em>pop eip</em>，如果此时栈顶的数据为我们的shellcode的地址，就可以实现pwn。</p>
+<p>而如何修改内存中的数据呢？大概主要就是字符读取的函数函数*gets()<em>和</em>scanf()<em>与其类似的函数、字符串处理函数</em>strcpy()<em>和</em>strcat()*等函数，所造成的缓冲区溢出，从而覆盖返回地址&#x2F;对内存地址进行赋值操作了。</p>
+<span id="more"></span>
+<h1 id="一般方法"><a href="#一般方法" class="headerlink" title="一般方法"></a>一般方法</h1><p>如果程序内有相应的功能函数，直接将<em>ret</em>时的栈顶esp，改为所选函数机器码开始的地址即可。</p>
+<p>若没有相应的函数，则可将shellcode输入到堆栈内，并使<em>ret</em>时的栈顶esp改为shellcode开始的地址即可。其中shellcode的地址可通过*printf()*函数来泄露。</p>
+<p>对于linux有PLT&#x2F;POT表，对照结构，修改内存，可修改对应call的函数。</p>
+<p>对于继承的class有一个叫做vptr的东西，根据其结构，修改内存中的函数地址，可修改所对应call的函数。</p>
+<p>对于一些结构体(如链表)，通过uaf，也可修改指定内存位置的内容。</p>
+<h1 id="DEP-x2F-NX"><a href="#DEP-x2F-NX" class="headerlink" title="DEP&#x2F;NX"></a>DEP&#x2F;NX</h1><p>处理器和Linux系统有一种叫做NX(No eXecute)的技术，windows上对应的技术叫做DEP(Data Execution Prevention)，使得一些内存不能拥有<em>RWX</em>中的<strong>X</strong>执行属性。若尝试在不能执行的内存(如堆栈)中执行，则报错。</p>
+<p>此时，可使用ROP(Return-oriented programming)技术。具体操作为寻找以<em>ret</em>结尾，有<em>pop&#x2F;lea&#x2F;mov</em>的内存地址。以<em>ret</em>为主体，构造一个ROP链接，达到修改寄存器并调用指定call的目的。</p>
+<h1 id="ASLR-x2F-PIE"><a href="#ASLR-x2F-PIE" class="headerlink" title="ASLR&#x2F;PIE"></a>ASLR&#x2F;PIE</h1><p>Linux系统有一种叫做PIE(Position-independent executables)的技术，windows上对应的技术叫做ALSR，使得程序中的内存地址不再固定，变得随机化了。同一个程序每次运行的内存地址，都会发生改变。</p>
+<p>在ctf中一般通过地址泄露来获得相应的地址。</p>
+<p>而在实际中，可使用一种叫做堆喷射(Heap Spraying)的技术。这种技术通过申请大量的内存空间，填充一些无意义的滑行指令，并将shellcode放到申请的内存空间的末端。这样，只要eip落到所申请的空间内，即可在执行一串无意义的滑行指令后，执行我们的shellcode。<br>典型的例子有：使用0x0c0c0c0c来填充内存空间，而其对应的汇编恰好为无意义的指令</p>
+<figure class="highlight x86asm"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">0C0C0C0C | 0C 0C                | <span class="keyword">or</span>      <span class="built_in">al</span>, <span class="number">0xC</span>                    |</span><br><span class="line">0C0C0C0E | 0C 0C                | <span class="keyword">or</span>      <span class="built_in">al</span>, <span class="number">0xC</span>                    |</span><br></pre></td></tr></table></figure>
+
+<h1 id="GS-x2F-Canaries"><a href="#GS-x2F-Canaries" class="headerlink" title="GS&#x2F;Canaries"></a>GS&#x2F;Canaries</h1><p>有一种叫做stack-protector 的技术，Linux系统中的gcc称之为为Canaries，windows上的cl称之为GS。即是在<em>return</em>前，检查堆栈上的一个于函数之前生成的随机数是否被改变。<br>要么在<em>return</em>前调用shellcode，要么通过泄露此随机数来使得检测通过。</p>
+<p>有时候程序不退出，你甚至还能用这个来泄露地址。</p>
+<h1 id="杂项"><a href="#杂项" class="headerlink" title="杂项"></a>杂项</h1><p>使用<em>alpha_mixed</em>的encoders可生成由字母组成的shellcode，使用*–bad-chars*可排除一些字符</p>
+<h1 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a><span class="_link" style="font-size:14px">参考资料</span></h1><p><a target="_blank" rel="noopener" href="https://ctf-wiki.github.io/ctf-wiki/pwn/readme/">Pwn Overview</a></p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/asm/" rel="tag"># asm</a>
+              <a href="/tags/security/" rel="tag"># security</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2018/11/23/tcp-udp-connect-info/" rel="prev" title="获取pid对应Tcp与Udp连接的信息">
+      <i class="fa fa-chevron-left"></i> 获取pid对应Tcp与Udp连接的信息
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2019/01/04/zabbix/" rel="next" title="zabbix的安装与使用">
+      zabbix的安装与使用 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    
+  <div class="comments">
+    <div id="disqus_thread">
+      <noscript>Please enable JavaScript to view the comments powered by Disqus.</noscript>
+    </div>
+  </div>
+  
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%89%8D%E8%A8%80"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E4%B8%80%E8%88%AC%E6%96%B9%E6%B3%95"><span class="nav-number">2.</span> <span class="nav-text">一般方法</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#DEP-x2F-NX"><span class="nav-number">3.</span> <span class="nav-text">DEP&#x2F;NX</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#ASLR-x2F-PIE"><span class="nav-number">4.</span> <span class="nav-text">ASLR&#x2F;PIE</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#GS-x2F-Canaries"><span class="nav-number">5.</span> <span class="nav-text">GS&#x2F;Canaries</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%9D%82%E9%A1%B9"><span class="nav-number">6.</span> <span class="nav-text">杂项</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%8F%82%E8%80%83%E8%B5%84%E6%96%99"><span class="nav-number">7.</span> <span class="nav-text">参考资料</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="xz"
+      src="/uploads/main.jpg">
+  <p class="site-author-name" itemprop="name">xz</p>
+  <div class="site-description" itemprop="description">Some Place where I can write something<br>总有一天你们会求我更博客的</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">43</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">39</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2023</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">xz</span>
+</div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+<script>
+  function loadCount() {
+    var d = document, s = d.createElement('script');
+    s.src = 'https://tencentadmin.disqus.com/count.js';
+    s.id = 'dsq-count-scr';
+    (d.head || d.body).appendChild(s);
+  }
+  // defer loading until the whole page loading is completed
+  window.addEventListener('load', loadCount, false);
+</script>
+<script>
+  var disqus_config = function() {
+    this.page.url = "https://blog.qwerdf.com/2018/12/31/overflow/";
+    this.page.identifier = "2018/12/31/overflow/";
+    this.page.title = "PWN学习";
+    };
+  NexT.utils.loadComments(document.querySelector('#disqus_thread'), () => {
+    if (window.DISQUS) {
+      DISQUS.reset({
+        reload: true,
+        config: disqus_config
+      });
+    } else {
+      var d = document, s = d.createElement('script');
+      s.src = 'https://tencentadmin.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', '' + +new Date());
+      (d.head || d.body).appendChild(s);
+    }
+  });
+</script>
+
+</body>
+</html>

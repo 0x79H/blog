@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <meta http-equiv="Cache-Control" content="no-transform">
+  <meta http-equiv="Cache-Control" content="no-siteapp">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"blog.qwerdf.com","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="简单来说，就是被丢了道vm的题，说没writeup。搜了搜确实没有，于是摸了摸，发现适合入门。 查看调用栈程序读取输入时，查看调用 12345678(gdb) bt#0  0x00000000004402b0 in ?? ()#1  0x0000000000400ae1 in ?? ()#2  0x00000000004010ba in ?? ()#3  0x0000000000400659 in">
+<meta property="og:type" content="article">
+<meta property="og:title" content="esrever-mv">
+<meta property="og:url" content="https://blog.qwerdf.com/2019/06/23/esrever-mv/index.html">
+<meta property="og:site_name" content="zzzZZZ">
+<meta property="og:description" content="简单来说，就是被丢了道vm的题，说没writeup。搜了搜确实没有，于是摸了摸，发现适合入门。 查看调用栈程序读取输入时，查看调用 12345678(gdb) bt#0  0x00000000004402b0 in ?? ()#1  0x0000000000400ae1 in ?? ()#2  0x00000000004010ba in ?? ()#3  0x0000000000400659 in">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2019-06-23T10:22:56.000Z">
+<meta property="article:modified_time" content="2023-07-12T18:12:00.694Z">
+<meta property="article:author" content="xz">
+<meta property="article:tag" content="linux">
+<meta property="article:tag" content="asm">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="https://blog.qwerdf.com/2019/06/23/esrever-mv/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'en'
+  };
+</script>
+
+  <title>esrever-mv | zzzZZZ</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-88654486-1"></script>
+    <script>
+      if (CONFIG.hostname === location.hostname) {
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'UA-88654486-1');
+      }
+    </script>
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">zzzZZZ</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="https://blog.qwerdf.com/2019/06/23/esrever-mv/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/uploads/main.jpg">
+      <meta itemprop="name" content="xz">
+      <meta itemprop="description" content="Some Place where I can write something<br>总有一天你们会求我更博客的">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="zzzZZZ">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          esrever-mv
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2019-06-23 18:22:56" itemprop="dateCreated datePublished" datetime="2019-06-23T18:22:56+08:00">2019-06-23</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2023-07-13 02:12:00" itemprop="dateModified" datetime="2023-07-13T02:12:00+08:00">2023-07-13</time>
+              </span>
+
+          
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Disqus: </span>
+    
+    <a title="disqus" href="/2019/06/23/esrever-mv/#disqus_thread" itemprop="discussionUrl">
+      <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2019/06/23/esrever-mv/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>简单来说，就是被丢了道vm的题，说没writeup。搜了搜确实没有，于是摸了摸，发现适合入门。</p>
+<h1 id="查看调用栈"><a href="#查看调用栈" class="headerlink" title="查看调用栈"></a>查看调用栈</h1><p>程序读取输入时，查看调用</p>
+<figure class="highlight mipsasm"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">(gdb) <span class="keyword">bt</span></span><br><span class="line"><span class="keyword"></span><span class="comment">#0  0x00000000004402b0 in ?? ()</span></span><br><span class="line"><span class="comment">#1  0x0000000000400ae1 in ?? ()</span></span><br><span class="line"><span class="comment">#2  0x00000000004010ba in ?? ()</span></span><br><span class="line"><span class="comment">#3  0x0000000000400659 in ?? ()</span></span><br><span class="line"><span class="comment">#4  0x0000000000401e26 in ?? ()</span></span><br><span class="line"><span class="comment">#5  0x000000000040201a in ?? ()</span></span><br><span class="line"><span class="comment">#6  0x0000000000400969 in ?? ()</span></span><br></pre></td></tr></table></figure>
+
+<h1 id="分析流程"><a href="#分析流程" class="headerlink" title="分析流程"></a>分析流程</h1><p>拖入ida</p>
+<span id="more"></span>
+<ul>
+<li>#0 0x00000000004402b0<ul>
+<li>发现是_read</li>
+</ul>
+</li>
+<li>#1 0x0000000000400ae1<ul>
+<li>发现是判断<code>[rdi+10008h]</code>为0或1来进行read或write</li>
+</ul>
+</li>
+<li>#2 0x00000000004010ba<ul>
+<li>逻辑图看起来像是vm解析执行的函数</li>
+<li>发现字符串<code>&quot;[MESSAGE] vm halt\n&quot;</code></li>
+<li>case为29(0x1d)</li>
+</ul>
+</li>
+<li>#3 0x0000000000400659<ul>
+<li>发现分支中含有字符串<code>&quot;Failed to create vm&quot;</code></li>
+<li>上方调用了两个静态变量，猜测为虚拟机代码、flag数据</li>
+</ul>
+</li>
+<li>#4 0x0000000000401e26<ul>
+<li>libc</li>
+</ul>
+</li>
+</ul>
+<h2 id="详细分析"><a href="#详细分析" class="headerlink" title="详细分析"></a>详细分析</h2><h3 id="分析-3所在的函数"><a href="#分析-3所在的函数" class="headerlink" title="分析#3所在的函数"></a>分析#3所在的函数</h3><p>分析#3所在函数<code>sub_4005F0</code>所调用的五个函数(#3为调用的第4个函数)</p>
+<ul>
+<li>都调用了*[rsp+28h+var_18]*，猜测var_18为vm</li>
+<li>#3之上的两个函数功能是将两个静态变量复制到0x4000与0x6000.</li>
+<li>#3最上方的函数之后有判断是否成功，且失败会提示<code>&quot;Failed to create vm&quot;</code>，则猜测为创建vm的函数</li>
+<li>#3之下的函数判断为销毁虚拟机</li>
+</ul>
+<h3 id="分析-2所在的虚拟机执行函数"><a href="#分析-2所在的虚拟机执行函数" class="headerlink" title="分析#2所在的虚拟机执行函数"></a>分析#2所在的虚拟机执行函数</h3><p>分析#2所在的虚拟机执行函数</p>
+<ul>
+<li><code>[rbx+10026h]</code>自增4，推断为ip.且由此判断vm指令为定长，长度为4.</li>
+<li>发现循环判断<code>rdi+8</code>.推断为解释器执行内存位置</li>
+<li>推断指令为<code>db opcode,db args[1],dw args[2]</code>，其中args[1]的高四位为一个参数(r8b)，低四位为一个参数(r10d)，args[2]为一个参数(r11d)</li>
+<li>分析opcode为0x1时发现，<code>[rdi+10018h]</code>为vm寄存器首地址</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line">.text:0000000000400FBB 48 8D AF 18 00+                lea     rbp, [rdi+10018h]</span><br><span class="line">.......</span><br><span class="line">.text:0000000000400FB4 4C 8D 6F 10                    lea     r13, [rdi+10h]  ; r13=base_addr</span><br><span class="line">.......</span><br><span class="line">.text:0000000000400FF0                loc_400FF0:</span><br><span class="line">.text:0000000000400FF0 83 EE 01                       sub     esi, 1</span><br><span class="line">.text:0000000000400FF3 0F B7 83 26 00+                movzx   eax, word ptr [rbx+10026h]</span><br><span class="line">.text:0000000000400FFA 66 83 F8 FC                    cmp     ax, 0FFFCh</span><br><span class="line">.text:0000000000400FFE 0F 87 BC 05 00+                ja      loc_4015C0</span><br><span class="line">.text:0000000000401004 0F B7 F8                       movzx   edi, ax         ; rdi=ip</span><br><span class="line">.text:0000000000401007 4C 01 EF                       add     rdi, r13</span><br><span class="line">.text:000000000040100A 4C 8D 4F 08                    lea     r9, [rdi+8]     ; base_addr+8+ip</span><br><span class="line">.text:000000000040100E 41 0F B6 51 01                 movzx   edx, byte ptr [r9+1]  ;args[1]</span><br><span class="line">.text:0000000000401013 41 0F B7 49 02                 movzx   ecx, word ptr [r9+2]  ;args[2]</span><br><span class="line">.text:0000000000401018 41 89 D0                       mov     r8d, edx</span><br><span class="line">.text:000000000040101B 41 89 D2                       mov     r10d, edx</span><br><span class="line">.text:000000000040101E 41 89 CB                       mov     r11d, ecx</span><br><span class="line">.text:0000000000401021 41 C0 E8 04                    shr     r8b, 4          ; t1 = args[1] &gt;&gt; 4;</span><br><span class="line">.text:0000000000401025 41 83 E2 0F                    and     r10d, 0Fh       ; t2 = args[1] &amp; 0xf</span><br><span class="line">.text:0000000000401029 41 83 E3 07                    and     r11d, 7         ; t3 = args[2] &amp; 7</span><br><span class="line">.......</span><br><span class="line">.text:0000000000401080 83 C0 04                       add     eax, 4          ; [rbx+10026h]+=4</span><br><span class="line">.text:0000000000401083 83 FE 00                       cmp     esi, 0</span><br><span class="line">.text:0000000000401086 66 89 83 26 00+                mov     [rbx+10026h], ax</span><br><span class="line">.text:000000000040108D 0F 8F 5D FF FF+                jg      loc_400FF0</span><br></pre></td></tr></table></figure>
+
+<h1 id="分析opcode"><a href="#分析opcode" class="headerlink" title="分析opcode"></a>分析opcode</h1><h2 id="分析调用的0x1d"><a href="#分析调用的0x1d" class="headerlink" title="分析调用的0x1d"></a>分析调用的0x1d</h2><p>简单来说就是判断[rdi+10008h]的值</p>
+<ul>
+<li>为1，则将[rdi+1000Ah]的值调用write输出</li>
+<li>为0，则将调用read，并将输入的值填充到[rbx+10018h].</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">.text:00000000004010B0                loc_4010B0:                             ; CODE XREF: _zz_execute+A7↑j</span><br><span class="line">.text:00000000004010B0                                                        ; DATA XREF: .rodata:off_4A23C0↓o</span><br><span class="line">.text:00000000004010B0 89 74 24 0C                    mov     [rsp+38h+var_2C], esi ; jumptable 0000000000401047 case 29</span><br><span class="line">.text:00000000004010B4 4C 89 EF                       mov     rdi, r13              ;</span><br><span class="line">.text:00000000004010B7 FF 53 08                       call    qword ptr [rbx+8]     ;调用#1所在函数</span><br><span class="line">.text:00000000004010BA 8B 74 24 0C                    mov     esi, [rsp+38h+var_2C]</span><br><span class="line">.text:00000000004010BE 66 89 83 18 00+                mov     [rbx+10018h], ax      ;返回值-&gt;[rbx+10018h]</span><br><span class="line">.text:00000000004010C5 0F B7 83 26 00+                movzx   eax, word ptr [rbx+10026h]</span><br><span class="line">.text:00000000004010CC EB B2                          jmp     short loc_401080 ; jumptable 0000000000401047 case 0</span><br></pre></td></tr></table></figure>
+
+<h2 id="分析0x1"><a href="#分析0x1" class="headerlink" title="分析0x1"></a>分析0x1</h2><p>简单来说就是: <em>[rdi+10018h+t1</em>2]&#x3D;-<em>[rdi+10018h+t2</em>2]</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">.text:0000000000400FBB 48 8D AF 18 00+                lea     rbp, [rdi+10018h]</span><br><span class="line">......</span><br><span class="line">.text:0000000000401510                loc_401510:                             ; CODE XREF: _zz_execute+A7↑j</span><br><span class="line">.text:0000000000401510                                                        ; DATA XREF: .rodata:off_4A23C0↓o</span><br><span class="line">.text:0000000000401510 45 0F B6 D2                    movzx   r10d, r10b      ; jumptable 0000000000401047 case 1</span><br><span class="line">.text:0000000000401514 45 0F B6 C0                    movzx   r8d, r8b</span><br><span class="line">.text:0000000000401518 42 0F B7 44 55+                movzx   eax, word ptr [rbp+r10*2+0]</span><br><span class="line">.text:000000000040151E F7 D8                          neg     eax             ; 取反</span><br><span class="line">.text:0000000000401520 66 42 89 44 45+                mov     [rbp+r8*2+0], ax</span><br><span class="line">.text:0000000000401526 0F B7 83 26 00+                movzx   eax, word ptr [rbx+10026h]</span><br><span class="line">.text:000000000040152D E9 4E FB FF FF                 jmp     loc_401080      ; jumptable 0000000000401047 case 0</span><br></pre></td></tr></table></figure>
+
+<h2 id="分析其他"><a href="#分析其他" class="headerlink" title="分析其他"></a>分析其他</h2><p>同上，以此类推。根据执行的vm代码，只需要分析<code>0x1e,0x17,0x03,0x13,0x1d,0x19,0x18,0x0f,0x03,0x01,0x0a,0x11</code>这12个opcode即可。</p>
+<h1 id="分析vm代码"><a href="#分析vm代码" class="headerlink" title="分析vm代码"></a>分析vm代码</h1><p>vm数据段(vm:0x6000)(.data:00000000006CC0A0)<br>vm代码段(vm:0x4000)(.data:00000000006CC0E0)</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><span class="line">case_0x1e, t0__t0, 0       ;t0=rand()                    \</span><br><span class="line">case_0x17, t0__t0, 8       ;if t0 == 0 then ip+2*4        |</span><br><span class="line">case_0x03, t0__t0, 0FFFFh  ;t0 = t0 + 0xffff              |</span><br><span class="line">case_0x03, IP__IP, 0FFF4h  ;IP = IP + 0xfff4 = IP - 3*4  /</span><br><span class="line">case_0x03, IP__IP, 0Ch     ;IP = IP + 3*4 (to 0x9)</span><br><span class="line">case_0x13, t0__t0, 1       ;t0 = 1</span><br><span class="line">case_0x1d, t0__t0, 0       ;write(STDOUT_FILENO,t1,1)(cauz t0=1)</span><br><span class="line">case_0x19, t0__t0, 0       ;</span><br><span class="line">case_0x13, t1__t0, 49h     ;t1=0x49(&quot;I&quot;)</span><br><span class="line">case_0x18, t0__t0, 0FFECh  ;CALL 0xffec= ip + 0xffec = ip - 5*4 (to 0x6)</span><br><span class="line">......</span><br><span class="line">case_0x18, t0__t0, 0FF94h  ;[9-32]&quot;Input flag:&quot;(0x49,0x6E,0x70,0x75,0x74,0x20,0x66,0x6C,0x61,0x67,0x3A,0x20)</span><br><span class="line">case_0x13, t4__t0, 0       ;t4=0</span><br><span class="line">case_0x0f, t1__t4, 6000h   ;t1=&amp;data[0x3C]+t4                               -- loop start</span><br><span class="line">case_0x03, t4__t4, 1       ;t4=t4+1 -&gt; t4++</span><br><span class="line">case_0x03, t1__t1, 0FFh    ;t1=t1&amp;0xff</span><br><span class="line">case_0x17, t1__t0, 88h     ;if t1 == 0 then ip + 34*4                       -- right</span><br><span class="line">case_0x13, t0__t0, 0       ;t0=0                       \</span><br><span class="line">case_0x1d, t0__t0, 0       ;read(STDIN_FILENO,&amp;t0)     /</span><br><span class="line">case_0x01, t0__t0, 0       ;t0=-t0</span><br><span class="line">case_0x03, t0__t0, 0FFh    ;t0=t0&amp;0xff</span><br><span class="line">case_0x0a, t0__t0, 1       ;t0=t0^t1</span><br><span class="line">case_0x17, t0__t0, 0FFD8h  ;if t0 == 0 then ip +0xffd8 = ip-10*4 (to 34)    -- loop </span><br><span class="line">case_0x13, t1__t0, 42h     ;t1=0x42(&quot;B&quot;)</span><br><span class="line">case_0x13, t0__t0, 1       ;t0=0x1</span><br><span class="line">......</span><br><span class="line">case_0x1d, t0__t0, 0       ;[44-70]&quot;Bad flag&quot;(0x42,0x61,0x64,0x20,0x66,0x6C,0x61,0x67,0x0A)</span><br><span class="line">case_0x11, t0__t0, 0       ;------</span><br><span class="line">case_0x13, t1__t0, 47h     ;t1=0x47(&quot;G&quot;)</span><br><span class="line">case_0x13, t0__t0, 1       ;t0=0x1</span><br><span class="line">case_0x1d, t0__t0, 0       ;write(STDOUT_FILENO,t1,1)</span><br><span class="line">......</span><br><span class="line">case_0x1d, t0__t0, 0       ;[72-99]&quot;Good flag&quot;(0x47,0x6F,0x6F,0x64,0x20,0x66,0x6C,0x61,0x67,0x0A)</span><br><span class="line">case_0x11, t0__t0, 0       ;------</span><br><span class="line">;print(&quot;&quot;.join([chr(0x100-i) for i in _data]))</span><br></pre></td></tr></table></figure>
+
+<h1 id="其他"><a href="#其他" class="headerlink" title="其他"></a>其他</h1><p>然而，差不多搞完了才发现作者把writeup都丢到脸上了:<a target="_blank" rel="noopener" href="https://github.com/Inndy/zzvm">gayhub</a></p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/linux/" rel="tag"># linux</a>
+              <a href="/tags/asm/" rel="tag"># asm</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2019/06/10/springboot-encoding/" rel="prev" title="SpringBoot 中文乱码">
+      <i class="fa fa-chevron-left"></i> SpringBoot 中文乱码
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2019/07/21/fmt/" rel="next" title="字符串格式化所导致的漏洞">
+      字符串格式化所导致的漏洞 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    
+  <div class="comments">
+    <div id="disqus_thread">
+      <noscript>Please enable JavaScript to view the comments powered by Disqus.</noscript>
+    </div>
+  </div>
+  
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%9F%A5%E7%9C%8B%E8%B0%83%E7%94%A8%E6%A0%88"><span class="nav-number">1.</span> <span class="nav-text">查看调用栈</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%88%86%E6%9E%90%E6%B5%81%E7%A8%8B"><span class="nav-number">2.</span> <span class="nav-text">分析流程</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%AF%A6%E7%BB%86%E5%88%86%E6%9E%90"><span class="nav-number">2.1.</span> <span class="nav-text">详细分析</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%88%86%E6%9E%90-3%E6%89%80%E5%9C%A8%E7%9A%84%E5%87%BD%E6%95%B0"><span class="nav-number">2.1.1.</span> <span class="nav-text">分析#3所在的函数</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%88%86%E6%9E%90-2%E6%89%80%E5%9C%A8%E7%9A%84%E8%99%9A%E6%8B%9F%E6%9C%BA%E6%89%A7%E8%A1%8C%E5%87%BD%E6%95%B0"><span class="nav-number">2.1.2.</span> <span class="nav-text">分析#2所在的虚拟机执行函数</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%88%86%E6%9E%90opcode"><span class="nav-number">3.</span> <span class="nav-text">分析opcode</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%88%86%E6%9E%90%E8%B0%83%E7%94%A8%E7%9A%840x1d"><span class="nav-number">3.1.</span> <span class="nav-text">分析调用的0x1d</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%88%86%E6%9E%900x1"><span class="nav-number">3.2.</span> <span class="nav-text">分析0x1</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%88%86%E6%9E%90%E5%85%B6%E4%BB%96"><span class="nav-number">3.3.</span> <span class="nav-text">分析其他</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%88%86%E6%9E%90vm%E4%BB%A3%E7%A0%81"><span class="nav-number">4.</span> <span class="nav-text">分析vm代码</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%85%B6%E4%BB%96"><span class="nav-number">5.</span> <span class="nav-text">其他</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="xz"
+      src="/uploads/main.jpg">
+  <p class="site-author-name" itemprop="name">xz</p>
+  <div class="site-description" itemprop="description">Some Place where I can write something<br>总有一天你们会求我更博客的</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">43</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">39</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2023</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">xz</span>
+</div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+<script>
+  function loadCount() {
+    var d = document, s = d.createElement('script');
+    s.src = 'https://tencentadmin.disqus.com/count.js';
+    s.id = 'dsq-count-scr';
+    (d.head || d.body).appendChild(s);
+  }
+  // defer loading until the whole page loading is completed
+  window.addEventListener('load', loadCount, false);
+</script>
+<script>
+  var disqus_config = function() {
+    this.page.url = "https://blog.qwerdf.com/2019/06/23/esrever-mv/";
+    this.page.identifier = "2019/06/23/esrever-mv/";
+    this.page.title = "esrever-mv";
+    };
+  NexT.utils.loadComments(document.querySelector('#disqus_thread'), () => {
+    if (window.DISQUS) {
+      DISQUS.reset({
+        reload: true,
+        config: disqus_config
+      });
+    } else {
+      var d = document, s = d.createElement('script');
+      s.src = 'https://tencentadmin.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', '' + +new Date());
+      (d.head || d.body).appendChild(s);
+    }
+  });
+</script>
+
+</body>
+</html>

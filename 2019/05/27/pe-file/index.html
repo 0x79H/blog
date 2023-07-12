@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <meta http-equiv="Cache-Control" content="no-transform">
+  <meta http-equiv="Cache-Control" content="no-siteapp">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"blog.qwerdf.com","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="PE结构也是一些基础啦 文件头一开始DOS头的最后一个成员指向NT头.NT头的中定义了加载地址,加载选项,入口地址.也在最后一个成员IMAGE_DATA_DIRECTORY_ARRAY定义了pe文件包含导入表、导出表、资源表、重定位表在内的、固定的15个表信息,包含RVA与大小信息.NT头后的IMAGE_SECTION_HEADER定义了所有的区块(如.upx0、.upx1、.text等)的加载信">
+<meta property="og:type" content="article">
+<meta property="og:title" content="PE结构">
+<meta property="og:url" content="https://blog.qwerdf.com/2019/05/27/pe-file/index.html">
+<meta property="og:site_name" content="zzzZZZ">
+<meta property="og:description" content="PE结构也是一些基础啦 文件头一开始DOS头的最后一个成员指向NT头.NT头的中定义了加载地址,加载选项,入口地址.也在最后一个成员IMAGE_DATA_DIRECTORY_ARRAY定义了pe文件包含导入表、导出表、资源表、重定位表在内的、固定的15个表信息,包含RVA与大小信息.NT头后的IMAGE_SECTION_HEADER定义了所有的区块(如.upx0、.upx1、.text等)的加载信">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2019-05-27T05:12:26.000Z">
+<meta property="article:modified_time" content="2023-07-12T18:12:00.698Z">
+<meta property="article:author" content="xz">
+<meta property="article:tag" content="windows">
+<meta property="article:tag" content="pe">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="https://blog.qwerdf.com/2019/05/27/pe-file/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'en'
+  };
+</script>
+
+  <title>PE结构 | zzzZZZ</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-88654486-1"></script>
+    <script>
+      if (CONFIG.hostname === location.hostname) {
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'UA-88654486-1');
+      }
+    </script>
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">zzzZZZ</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="https://blog.qwerdf.com/2019/05/27/pe-file/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/uploads/main.jpg">
+      <meta itemprop="name" content="xz">
+      <meta itemprop="description" content="Some Place where I can write something<br>总有一天你们会求我更博客的">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="zzzZZZ">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          PE结构
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2019-05-27 13:12:26" itemprop="dateCreated datePublished" datetime="2019-05-27T13:12:26+08:00">2019-05-27</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2023-07-13 02:12:00" itemprop="dateModified" datetime="2023-07-13T02:12:00+08:00">2023-07-13</time>
+              </span>
+
+          
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Disqus: </span>
+    
+    <a title="disqus" href="/2019/05/27/pe-file/#disqus_thread" itemprop="discussionUrl">
+      <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2019/05/27/pe-file/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h1 id="PE结构"><a href="#PE结构" class="headerlink" title="PE结构"></a>PE结构</h1><p>也是一些基础啦</p>
+<h2 id="文件头"><a href="#文件头" class="headerlink" title="文件头"></a>文件头</h2><p>一开始DOS头的最后一个成员指向NT头.<br>NT头的中定义了加载地址,加载选项,入口地址.也在最后一个成员<code>IMAGE_DATA_DIRECTORY_ARRAY</code>定义了pe文件包含导入表、导出表、资源表、重定位表在内的、固定的15个表信息,包含RVA与大小信息.<br>NT头后的<code>IMAGE_SECTION_HEADER</code>定义了所有的区块(如.upx0、.upx1、.text等)的加载信息,包含RVA、名称、大小等信息。</p>
+<h2 id="导入表"><a href="#导入表" class="headerlink" title="导入表"></a>导入表</h2><p>先来看一波结构体,其中前置的有:<code>dos头-&gt;nt头-&gt;附加头-&gt;导入表--(对应区段地址)--&gt;PIMAGE_IMPORT_DESCRIPTOR</code></p>
+<span id="more"></span>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span> _<span class="title">IMAGE_IMPORT_DESCRIPTOR</span> &#123;</span></span><br><span class="line"><span class="class"><span class="keyword">union</span> &#123;</span></span><br><span class="line">DWORD   Characteristics;</span><br><span class="line">DWORD   OriginalFirstThunk; <span class="comment">// 原始导入表(INT)的RVA (PIMAGE_THUNK_DATA)</span></span><br><span class="line">&#125; DUMMYUNIONNAME;</span><br><span class="line">DWORD   TimeDateStamp;</span><br><span class="line">DWORD   ForwarderChain;</span><br><span class="line">DWORD   Name;       <span class="comment">// 导入dll名称</span></span><br><span class="line">DWORD   FirstThunk; <span class="comment">// 导入表(IAT)的RVA (PIMAGE_THUNK_DATA)</span></span><br><span class="line">&#125; IMAGE_IMPORT_DESCRIPTOR;</span><br><span class="line"><span class="keyword">typedef</span> IMAGE_IMPORT_DESCRIPTOR UNALIGNED *PIMAGE_IMPORT_DESCRIPTOR;</span><br><span class="line"></span><br><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span> _<span class="title">IMAGE_THUNK_DATA32</span> &#123;</span></span><br><span class="line"><span class="class"><span class="keyword">union</span> &#123;</span></span><br><span class="line">DWORD ForwarderString;</span><br><span class="line">DWORD Function; <span class="comment">// PDWORD</span></span><br><span class="line">DWORD Ordinal;  <span class="comment">// 序号</span></span><br><span class="line">DWORD AddressOfData;<span class="comment">// PIMAGE_IMPORT_BY_NAME</span></span><br><span class="line">&#125; u1;</span><br><span class="line">&#125; IMAGE_THUNK_DATA32;</span><br><span class="line"><span class="keyword">typedef</span> IMAGE_THUNK_DATA32 * PIMAGE_THUNK_DATA32;</span><br><span class="line"></span><br><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span> _<span class="title">IMAGE_IMPORT_BY_NAME</span> &#123;</span>  </span><br><span class="line">WORD    Hint;   <span class="comment">//序号</span></span><br><span class="line">CHAR   Name[<span class="number">1</span>]; <span class="comment">// 函数名</span></span><br><span class="line">&#125; IMAGE_IMPORT_BY_NAME, *PIMAGE_IMPORT_BY_NAME;</span><br></pre></td></tr></table></figure>
+<p>未加载的pe文件,IAT(Import Address Table)与INT(Import Name Table)内容一致,都为<code>PIMAGE_THUNK_DATA-&gt;AddressOfData</code>.<br>然而加载后,pe装载器会根据INT,将IAT所指向的<code>PIMAGE_THUNK_DATA-&gt;AddressOfData</code>更新为<code>PIMAGE_THUNK_DATA-&gt;Function</code>.</p>
+<p>若使用序号导入,则不是<code>PIMAGE_THUNK_DATA-&gt;AddressOfData</code>,而是<code>PIMAGE_THUNK_DATA-&gt;Ordinal</code>.区别为查看该DWORD第一位是否为1.<br>这里设计的巧妙之处在于,即使只有31位来存储地址,也不可能超过2g的内存限制(指在32位非pae的情况下)</p>
+<h2 id="导出表"><a href="#导出表" class="headerlink" title="导出表"></a>导出表</h2><p>这边建议您查看之前的<a href="2019/01/08/GetFunctionAddr/">获取 DLL 的函数地址</a>呢</p>
+<h2 id="重定位表"><a href="#重定位表" class="headerlink" title="重定位表"></a>重定位表</h2><p>来看一波结构体,其中前置的有:<code>dos头-&gt;nt头-&gt;附加头-&gt;重定位表(BaseRelocationTable)--(对应区段地址,如.reloc)--&gt;PIMAGE_BASE_RELOCATION</code></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span> _<span class="title">IMAGE_BASE_RELOCATION</span> &#123;</span></span><br><span class="line">    DWORD   VirtualAddress;<span class="comment">//以0x1000为单位块的RVA</span></span><br><span class="line">    DWORD   SizeOfBlock;<span class="comment">//重定位表中此结构体的大小 总是4的倍数</span></span><br><span class="line">    WORD    TypeOffset[<span class="number">0</span>];<span class="comment">//包含重定位类型与重定位地址的两字节信息</span></span><br><span class="line">&#125; IMAGE_BASE_RELOCATION,* PIMAGE_BASE_RELOCATION;</span><br></pre></td></tr></table></figure>
+<p>TypeOffset中高4位(&amp;0xf000)为重定位类型,低12位(&amp;0x0fff+0x1000*n)为重定位地址.数量共<code>(SizeOfBlock-4*2)/2</code>个.<br>将重定位地址的值重定位为正确的位置即可.</p>
+<h2 id="资源表"><a href="#资源表" class="headerlink" title="资源表"></a>资源表</h2><p>三层导航啦,来看结构体,其中前置的有:<code>dos头-&gt;nt头-&gt;附加头-&gt;资源表(RelocTable)--(对应区段地址,如.rsrc)--&gt;PIMAGE_RESOURCE_DIRECTORY</code></p>
+<figure class="highlight elm"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">typedef struct _IMAGE_RESOURCE_DIRECTORY &#123;</span><br><span class="line">    <span class="type">ULONG</span>   <span class="type">Characteristics</span>;</span><br><span class="line">    <span class="type">ULONG</span>   <span class="type">TimeDateStamp</span>;</span><br><span class="line">    <span class="type">USHORT</span>  <span class="type">MajorVersion</span>;</span><br><span class="line">    <span class="type">USHORT</span>  <span class="type">MinorVersion</span>;</span><br><span class="line">    <span class="type">USHORT</span>  <span class="type">NumberOfNamedEntries</span>;       //资源名</span><br><span class="line">    <span class="type">USHORT</span>  <span class="type">NumberOfIdEntries</span>;          //序号</span><br><span class="line">    //后跟<span class="type">IMAGE_RESOURCE_DIRECTORY_ENTRY</span></span><br><span class="line">&#125; <span class="type">IMAGE_RESOURCE_DIRECTORY</span>, *<span class="type">PIMAGE_RESOURCE_DIRECTORY</span>;</span><br><span class="line"></span><br><span class="line">typedef struct _IMAGE_RESOURCE_DIRECTORY_ENTRY &#123;</span><br><span class="line">    <span class="type">ULONG</span>   <span class="type">Name</span>;           //名称或序号指针</span><br><span class="line">    <span class="type">ULONG</span>   <span class="type">OffsetToData</span>;   //指向下一个<span class="type">PIMAGE_RESOURCE_DIRECTORY</span> </span><br><span class="line">                            //或指向最终的<span class="type">PIMAGE_RESOURCE_DATA_ENTRY</span></span><br><span class="line">&#125; <span class="type">IMAGE_RESOURCE_DIRECTORY_ENTRY</span>, *<span class="type">PIMAGE_RESOURCE_DIRECTORY_ENTRY</span>;</span><br><span class="line">//以上为一层导航</span><br><span class="line">typedef struct _IMAGE_RESOURCE_DATA_ENTRY &#123;</span><br><span class="line">    <span class="type">ULONG</span>   <span class="type">OffsetToData</span>;   //资源的<span class="type">RVA</span></span><br><span class="line">    <span class="type">ULONG</span>   <span class="type">Size</span>;</span><br><span class="line">    <span class="type">ULONG</span>   <span class="type">CodePage</span>;</span><br><span class="line">    <span class="type">ULONG</span>   <span class="type">Reserved</span>;</span><br><span class="line">&#125; <span class="type">IMAGE_RESOURCE_DATA_ENTRY</span>, *<span class="type">PIMAGE_RESOURCE_DATA_ENTRY</span>;</span><br></pre></td></tr></table></figure>
+
+<h1 id="工具"><a href="#工具" class="headerlink" title="工具"></a>工具</h1><p>010editor、stud_pe、pe-bear、x96dbg了解下</p>
+<p>hwh不动啊，都是waf，当然是选择水一水博客喽😀</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/windows/" rel="tag"># windows</a>
+              <a href="/tags/pe/" rel="tag"># pe</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2019/05/09/windows-new-terminal-install/" rel="prev" title="如何在Windows 1903上安装Windows Terminal">
+      <i class="fa fa-chevron-left"></i> 如何在Windows 1903上安装Windows Terminal
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2019/06/03/msys2-update-fix/" rel="next" title="msys2替换ncurses为pdcurses后更新失败">
+      msys2替换ncurses为pdcurses后更新失败 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    
+  <div class="comments">
+    <div id="disqus_thread">
+      <noscript>Please enable JavaScript to view the comments powered by Disqus.</noscript>
+    </div>
+  </div>
+  
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#PE%E7%BB%93%E6%9E%84"><span class="nav-number">1.</span> <span class="nav-text">PE结构</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%96%87%E4%BB%B6%E5%A4%B4"><span class="nav-number">1.1.</span> <span class="nav-text">文件头</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AF%BC%E5%85%A5%E8%A1%A8"><span class="nav-number">1.2.</span> <span class="nav-text">导入表</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AF%BC%E5%87%BA%E8%A1%A8"><span class="nav-number">1.3.</span> <span class="nav-text">导出表</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%87%8D%E5%AE%9A%E4%BD%8D%E8%A1%A8"><span class="nav-number">1.4.</span> <span class="nav-text">重定位表</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%B5%84%E6%BA%90%E8%A1%A8"><span class="nav-number">1.5.</span> <span class="nav-text">资源表</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%B7%A5%E5%85%B7"><span class="nav-number">2.</span> <span class="nav-text">工具</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="xz"
+      src="/uploads/main.jpg">
+  <p class="site-author-name" itemprop="name">xz</p>
+  <div class="site-description" itemprop="description">Some Place where I can write something<br>总有一天你们会求我更博客的</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">43</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">39</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2023</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">xz</span>
+</div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+<script>
+  function loadCount() {
+    var d = document, s = d.createElement('script');
+    s.src = 'https://tencentadmin.disqus.com/count.js';
+    s.id = 'dsq-count-scr';
+    (d.head || d.body).appendChild(s);
+  }
+  // defer loading until the whole page loading is completed
+  window.addEventListener('load', loadCount, false);
+</script>
+<script>
+  var disqus_config = function() {
+    this.page.url = "https://blog.qwerdf.com/2019/05/27/pe-file/";
+    this.page.identifier = "2019/05/27/pe-file/";
+    this.page.title = "PE结构";
+    };
+  NexT.utils.loadComments(document.querySelector('#disqus_thread'), () => {
+    if (window.DISQUS) {
+      DISQUS.reset({
+        reload: true,
+        config: disqus_config
+      });
+    } else {
+      var d = document, s = d.createElement('script');
+      s.src = 'https://tencentadmin.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', '' + +new Date());
+      (d.head || d.body).appendChild(s);
+    }
+  });
+</script>
+
+</body>
+</html>

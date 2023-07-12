@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 6.3.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+  <meta http-equiv="Cache-Control" content="no-transform">
+  <meta http-equiv="Cache-Control" content="no-siteapp">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"blog.qwerdf.com","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="面试了一家公司,问我有没有用过zabbix.然而我并没有用过,讲道理之前最多打打补丁,系统搞搞加固,因为没出过什么大事也就一直这么搞了,并没有说时时刻刻监控着服务器,没有这个需求.不过后来搜了搜,发现确实能解决一些痛点,于是就决定自己搭建一个看看怎么用. 安装系统是debian(其实是kali),直接apt-get安装莫名其妙没有找到数据库的sql文件(后来发现在包里有),索性直接源码编译安装了">
+<meta property="og:type" content="article">
+<meta property="og:title" content="zabbix的安装与使用">
+<meta property="og:url" content="https://blog.qwerdf.com/2019/01/04/zabbix/index.html">
+<meta property="og:site_name" content="zzzZZZ">
+<meta property="og:description" content="面试了一家公司,问我有没有用过zabbix.然而我并没有用过,讲道理之前最多打打补丁,系统搞搞加固,因为没出过什么大事也就一直这么搞了,并没有说时时刻刻监控着服务器,没有这个需求.不过后来搜了搜,发现确实能解决一些痛点,于是就决定自己搭建一个看看怎么用. 安装系统是debian(其实是kali),直接apt-get安装莫名其妙没有找到数据库的sql文件(后来发现在包里有),索性直接源码编译安装了">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2019-01-04T15:02:16.000Z">
+<meta property="article:modified_time" content="2023-07-12T18:12:00.723Z">
+<meta property="article:author" content="xz">
+<meta property="article:tag" content="linux">
+<meta property="article:tag" content="zabbix">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="https://blog.qwerdf.com/2019/01/04/zabbix/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'en'
+  };
+</script>
+
+  <title>zabbix的安装与使用 | zzzZZZ</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-88654486-1"></script>
+    <script>
+      if (CONFIG.hostname === location.hostname) {
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'UA-88654486-1');
+      }
+    </script>
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">zzzZZZ</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>Tags</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="https://blog.qwerdf.com/2019/01/04/zabbix/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/uploads/main.jpg">
+      <meta itemprop="name" content="xz">
+      <meta itemprop="description" content="Some Place where I can write something<br>总有一天你们会求我更博客的">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="zzzZZZ">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          zabbix的安装与使用
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2019-01-04 23:02:16" itemprop="dateCreated datePublished" datetime="2019-01-04T23:02:16+08:00">2019-01-04</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2023-07-13 02:12:00" itemprop="dateModified" datetime="2023-07-13T02:12:00+08:00">2023-07-13</time>
+              </span>
+
+          
+  
+  <span class="post-meta-item">
+    
+      <span class="post-meta-item-icon">
+        <i class="far fa-comment"></i>
+      </span>
+      <span class="post-meta-item-text">Disqus: </span>
+    
+    <a title="disqus" href="/2019/01/04/zabbix/#disqus_thread" itemprop="discussionUrl">
+      <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2019/01/04/zabbix/" itemprop="commentCount"></span>
+    </a>
+  </span>
+  
+  
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>面试了一家公司,问我有没有用过zabbix.然而我并没有用过,讲道理之前最多打打补丁,系统搞搞加固,因为没出过什么大事也就一直这么搞了,并没有说时时刻刻监控着服务器,没有这个需求.<br>不过后来搜了搜,发现确实能解决一些痛点,于是就决定自己搭建一个看看怎么用.</p>
+<h1 id="安装"><a href="#安装" class="headerlink" title="安装"></a>安装</h1><p>系统是debian(其实是kali),直接apt-get安装莫名其妙没有找到数据库的sql文件(后来发现在包里有),索性直接源码编译安装了</p>
+<span id="more"></span>
+<h2 id="编译安装"><a href="#编译安装" class="headerlink" title="编译安装"></a>编译安装</h2><p>官网上下载,解压:</p>
+<figure class="highlight elixir"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">root<span class="variable">@kali</span><span class="symbol">:~/Desktop/zabbix-</span><span class="number">4.0</span>.<span class="number">3</span><span class="comment"># ./configure --enable-server --enable-agent --with-mysql\</span></span><br><span class="line">                      --enable-ipv6 --<span class="keyword">with</span>-net-snmp --<span class="keyword">with</span>-libcurl --<span class="keyword">with</span>-libxml2</span><br><span class="line"><span class="symbol">configure:</span> <span class="symbol">error:</span> <span class="title class_">MySQL</span> library <span class="keyword">not</span> found</span><br><span class="line"><span class="symbol">configure:</span> <span class="symbol">error:</span> <span class="title class_">LIBXML2</span> library <span class="keyword">not</span> found</span><br><span class="line"><span class="symbol">configure:</span> <span class="symbol">error:</span> <span class="title class_">Invalid</span> <span class="title class_">Net</span>-<span class="title class_">SNMP</span> directory - unable to find net-snmp-config</span><br><span class="line"><span class="symbol">configure:</span> <span class="symbol">error:</span> <span class="title class_">Unable</span> to <span class="keyword">use</span> libevent (libevent check failed)</span><br><span class="line"><span class="symbol">configure:</span> <span class="symbol">error:</span> <span class="title class_">Unable</span> to <span class="keyword">use</span> libpcre (libpcre check failed)</span><br><span class="line">root<span class="variable">@kali</span><span class="symbol">:~/Desktop/zabbix-</span><span class="number">4.0</span>.<span class="number">3</span><span class="comment"># apt-get install default-libmysqlclient-dev libxml2-dev libevent-dev libpcre++-dev</span></span><br><span class="line">root<span class="variable">@kali</span><span class="symbol">:~/Desktop/net-snmp-</span><span class="number">5.8</span><span class="comment"># ./configure --with-default-snmp-version=&quot;3&quot; \</span></span><br><span class="line">                    --<span class="keyword">with</span>-sys-contact=<span class="string">&quot;@@no.where&quot;</span> --<span class="keyword">with</span>-sys-location=<span class="string">&quot;Unknown&quot;</span> </span><br><span class="line">--<span class="keyword">with</span>-logfile=<span class="string">&quot;/var/log/snmpd.log&quot;</span> --<span class="keyword">with</span>-persistent-directory=<span class="string">&quot;/var/net-snmp&quot;</span> <span class="comment">#好像没有现成的包</span></span><br><span class="line">root<span class="variable">@kali</span><span class="symbol">:~/Desktop/net-snmp-</span><span class="number">5.8</span><span class="comment"># make&amp;&amp;make install</span></span><br><span class="line">root<span class="variable">@kali</span><span class="symbol">:~/Desktop/net-snmp-</span><span class="number">5.8</span><span class="comment"># snmpget --version</span></span><br><span class="line"><span class="title class_">NET</span>-<span class="title class_">SNMP</span> <span class="symbol">version:</span> <span class="number">5.8</span></span><br><span class="line">root<span class="variable">@kali</span><span class="symbol">:~/Desktop/zabbix-</span><span class="number">4.0</span>.<span class="number">3</span><span class="comment"># make&amp;&amp;make install</span></span><br><span class="line">root<span class="variable">@kali</span><span class="symbol">:~/Desktop/zabbix-</span><span class="number">4.0</span>.<span class="number">3</span><span class="comment"># zabbix_agentd -V</span></span><br><span class="line">zabbix_agentd (daemon) (<span class="title class_">Zabbix</span>) <span class="number">4.0</span>.<span class="number">3</span></span><br><span class="line"><span class="title class_">Revision</span> <span class="number">87993</span> <span class="number">20</span> <span class="title class_">December</span> <span class="number">2018</span>, compilation <span class="symbol">time:</span> <span class="title class_">Jan</span>  <span class="number">5</span> <span class="number">2019</span> <span class="number">14</span><span class="symbol">:</span><span class="number">02</span><span class="symbol">:</span><span class="number">48</span></span><br><span class="line">root<span class="variable">@kali</span><span class="symbol">:~/Desktop/zabbix-</span><span class="number">4.0</span>.<span class="number">3</span><span class="comment"># zabbix_server -V</span></span><br><span class="line">zabbix_server (<span class="title class_">Zabbix</span>) <span class="number">4.0</span>.<span class="number">3</span></span><br><span class="line"><span class="title class_">Revision</span> <span class="number">87993</span> <span class="number">20</span> <span class="title class_">December</span> <span class="number">2018</span>, compilation <span class="symbol">time:</span> <span class="title class_">Jan</span>  <span class="number">5</span> <span class="number">2019</span> <span class="number">14</span><span class="symbol">:</span><span class="number">02</span><span class="symbol">:</span><span class="number">48</span></span><br></pre></td></tr></table></figure>
+<h2 id="配置zabbix-server"><a href="#配置zabbix-server" class="headerlink" title="配置zabbix_server"></a>配置zabbix_server</h2><p>zabbix server简单来说就是管理服务器的服务器<br>新建用户zabbix</p>
+<figure class="highlight elixir"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">root<span class="variable">@kali</span><span class="symbol">:~/Desktop/zabbix-</span><span class="number">4.0</span>.<span class="number">3</span><span class="comment"># groupadd zabbix</span></span><br><span class="line">root<span class="variable">@kali</span><span class="symbol">:~/Desktop/zabbix-</span><span class="number">4.0</span>.<span class="number">3</span><span class="comment"># useradd -g zabbix zabbix</span></span><br></pre></td></tr></table></figure>
+<p>创建数据库zabbix</p>
+<figure class="highlight pgsql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">root@kali:~/Desktop/zabbix<span class="number">-4.0</span><span class="number">.3</span># mysql -uroot -p</span><br><span class="line">MariaDB [(<span class="keyword">none</span>)]&gt; <span class="keyword">create</span> <span class="keyword">database</span> zabbix <span class="type">character</span> <span class="keyword">set</span> utf8 <span class="keyword">collate</span> utf8_bin;</span><br><span class="line">MariaDB [(<span class="keyword">none</span>)]&gt; <span class="keyword">grant</span> <span class="keyword">all</span> <span class="keyword">privileges</span> <span class="keyword">on</span> zabbix.* <span class="keyword">to</span> zabbix@localhost identified <span class="keyword">by</span> <span class="string">&#x27;&lt;密码&gt;&#x27;</span>;</span><br></pre></td></tr></table></figure>
+<p>导入数据库</p>
+<figure class="highlight elixir"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">root<span class="variable">@kali</span><span class="symbol">:~/Desktop/zabbix-</span><span class="number">4.0</span>.<span class="number">3</span><span class="comment"># mysql -uzabbix zabbix &lt; /database/mysql/schema.sql</span></span><br><span class="line">root<span class="variable">@kali</span><span class="symbol">:~/Desktop/zabbix-</span><span class="number">4.0</span>.<span class="number">3</span><span class="comment"># mysql -uzabbix zabbix &lt; /database/mysql/images.sql</span></span><br><span class="line">root<span class="variable">@kali</span><span class="symbol">:~/Desktop/zabbix-</span><span class="number">4.0</span>.<span class="number">3</span><span class="comment"># mysql -uzabbix zabbix &lt; /database/mysql/data.sql</span></span><br></pre></td></tr></table></figure>
+<p>在*&#x2F;usr&#x2F;local&#x2F;etc&#x2F;zabbix_server.conf*中配置数据库信息</p>
+<figure class="highlight elixir"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">root<span class="variable">@kali</span><span class="symbol">:~/Desktop/zabbix-</span><span class="number">4.0</span>.<span class="number">3</span>/src<span class="comment"># grep -e &#x27;^DB&#x27; /usr/local/etc/zabbix_server.conf</span></span><br><span class="line"><span class="title class_">DBName</span>=zabbix</span><br><span class="line"><span class="title class_">DBUser</span>=zabbix</span><br><span class="line"><span class="title class_">DBPassword</span>=password</span><br></pre></td></tr></table></figure>
+<h2 id="配置zabbix-agentd"><a href="#配置zabbix-agentd" class="headerlink" title="配置zabbix_agentd"></a>配置zabbix_agentd</h2><p>zabbix agentd简单来说就是被管理被监控的服务器<br>在*&#x2F;usr&#x2F;local&#x2F;etc&#x2F;zabbix_agentd.conf*中配置服务器信息即可</p>
+<figure class="highlight elixir"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">root<span class="variable">@kali</span><span class="symbol">:~/Desktop/zabbix-</span><span class="number">4.0</span>.<span class="number">3</span><span class="comment"># grep -e &#x27;^S&#x27; /usr/local/etc/zabbix_agentd.conf</span></span><br><span class="line"><span class="title class_">Server</span>=<span class="number">127.0</span>.<span class="number">0.1</span></span><br><span class="line"><span class="title class_">ServerActive</span>=<span class="number">127.0</span>.<span class="number">0.1</span></span><br></pre></td></tr></table></figure>
+
+<h2 id="配置zabbix-frontends"><a href="#配置zabbix-frontends" class="headerlink" title="配置zabbix_frontends"></a>配置zabbix_frontends</h2><p>zabbix frontends简单来说就是zabbix_server的gui界面<br>复制所需文件:</p>
+<figure class="highlight elixir"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">root<span class="variable">@kali</span><span class="symbol">:~/Desktop/zabbix-</span><span class="number">4.0</span>.<span class="number">3</span><span class="comment"># cp -a frontends/php/ /var/www/html/zabbix</span></span><br><span class="line">root<span class="variable">@kali</span><span class="symbol">:~/Desktop/zabbix-</span><span class="number">4.0</span>.<span class="number">3</span><span class="comment"># chown -R www-data:www-data /var/www/html/</span></span><br><span class="line">root<span class="variable">@kali</span><span class="symbol">:~/Desktop/zabbix-</span><span class="number">4.0</span>.<span class="number">3</span><span class="comment"># apt-get install php7.2-bcmath php7.2-mbstring php7.2-gd php7.2-xml</span></span><br><span class="line">root<span class="variable">@kali</span><span class="symbol">:~/Desktop/zabbix-</span><span class="number">4.0</span>.<span class="number">3</span><span class="comment"># service apache2 restart</span></span><br></pre></td></tr></table></figure>
+
+<p>打开 <a target="_blank" rel="noopener" href="http://localhost/zabbix/">http://localhost/zabbix/</a> 即可web安装.<br><img src="data:image/png;base64,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" alt="cheack_image" title="php是世界上最好的语言(Python:?)"><br>其中<strong>php选项</strong>在php.ini中修改相应配置,或在apache的conf文件中使用<em>php_value</em>来配置,其余的mod已于前面安装了</p>
+<h2 id="配置zabbix-agent"><a href="#配置zabbix-agent" class="headerlink" title="配置zabbix_agent"></a>配置zabbix_agent</h2><p>zabbix agent简单来说就是中继服务器,中继agent与server之间的通讯,最大的作用我感觉就是均衡负载<br>之前编译的时候没有编译zabbix_agent,在*.&#x2F;configure –enable-agent<em>后编译,于</em>&#x2F;usr&#x2F;local&#x2F;etc&#x2F;zabbix_proxy.conf<em>中配置</em>Server*即可</p>
+<h2 id="语言设置"><a href="#语言设置" class="headerlink" title="语言设置"></a>语言设置</h2><p>需要生成语言文件</p>
+<figure class="highlight elixir"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">root<span class="variable">@kali</span><span class="symbol">:/var/www/html/zabbix</span><span class="comment"># apt-get install gettext</span></span><br><span class="line">root<span class="variable">@kali</span><span class="symbol">:/var/www/html/zabbix</span><span class="comment"># ./locale/make_mo.sh </span></span><br><span class="line">./locale/fr/<span class="title class_">LC_MESSAGES</span>/<span class="symbol">frontend.po:</span><span class="number">2060</span>: number of format specifications <span class="keyword">in</span> <span class="string">&#x27;msgid&#x27;</span> <span class="keyword">and</span> <span class="string">&#x27;msgstr&#x27;</span> does <span class="keyword">not</span> match</span><br><span class="line"><span class="symbol">msgfmt:</span> found <span class="number">1</span> fatal error</span><br><span class="line">root<span class="variable">@kali</span><span class="symbol">:/var/www/html/zabbix</span><span class="comment"># rm -rf locale/fr/ #反正也不用fr语言,删掉即可</span></span><br><span class="line">root<span class="variable">@kali</span><span class="symbol">:/var/www/html/zabbix</span><span class="comment"># ./locale/make_mo.sh </span></span><br></pre></td></tr></table></figure>
+
+<p>默认的用户语言是<em>en_GB</em>,可以通过修改数据库中users表的lang字段为<em>zh_CN</em>来使用中文.</p>
+<p>此时,zabbix就已经安装完成了.</p>
+<h1 id="配置"><a href="#配置" class="headerlink" title="配置"></a>配置</h1><p>使用默认账号密码Admin:zabbix登陆,就可web图形化配置.</p>
+<h1 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a><span style="font-size:14px">参考资料</span></h1><p><a target="_blank" rel="noopener" href="http://net-snmp.sourceforge.net/wiki/index.php/Net-Snmp_on_Ubuntu">Net-Snmp wiki</a></p>
+<p><a target="_blank" rel="noopener" href="https://www.zabbix.com/documentation/4.0/manual/installation/install">zabbix wiki</a></p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/linux/" rel="tag"># linux</a>
+              <a href="/tags/zabbix/" rel="tag"># zabbix</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2018/12/31/overflow/" rel="prev" title="PWN学习">
+      <i class="fa fa-chevron-left"></i> PWN学习
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2019/01/08/GetFunctionAddr/" rel="next" title="获取DLL的函数地址">
+      获取DLL的函数地址 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    
+  <div class="comments">
+    <div id="disqus_thread">
+      <noscript>Please enable JavaScript to view the comments powered by Disqus.</noscript>
+    </div>
+  </div>
+  
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%AE%89%E8%A3%85"><span class="nav-number">1.</span> <span class="nav-text">安装</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BC%96%E8%AF%91%E5%AE%89%E8%A3%85"><span class="nav-number">1.1.</span> <span class="nav-text">编译安装</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%85%8D%E7%BD%AEzabbix-server"><span class="nav-number">1.2.</span> <span class="nav-text">配置zabbix_server</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%85%8D%E7%BD%AEzabbix-agentd"><span class="nav-number">1.3.</span> <span class="nav-text">配置zabbix_agentd</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%85%8D%E7%BD%AEzabbix-frontends"><span class="nav-number">1.4.</span> <span class="nav-text">配置zabbix_frontends</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%85%8D%E7%BD%AEzabbix-agent"><span class="nav-number">1.5.</span> <span class="nav-text">配置zabbix_agent</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%AF%AD%E8%A8%80%E8%AE%BE%E7%BD%AE"><span class="nav-number">1.6.</span> <span class="nav-text">语言设置</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E9%85%8D%E7%BD%AE"><span class="nav-number">2.</span> <span class="nav-text">配置</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%8F%82%E8%80%83%E8%B5%84%E6%96%99"><span class="nav-number">3.</span> <span class="nav-text">参考资料</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="xz"
+      src="/uploads/main.jpg">
+  <p class="site-author-name" itemprop="name">xz</p>
+  <div class="site-description" itemprop="description">Some Place where I can write something<br>总有一天你们会求我更博客的</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">43</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">39</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2023</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">xz</span>
+</div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+<script>
+  function loadCount() {
+    var d = document, s = d.createElement('script');
+    s.src = 'https://tencentadmin.disqus.com/count.js';
+    s.id = 'dsq-count-scr';
+    (d.head || d.body).appendChild(s);
+  }
+  // defer loading until the whole page loading is completed
+  window.addEventListener('load', loadCount, false);
+</script>
+<script>
+  var disqus_config = function() {
+    this.page.url = "https://blog.qwerdf.com/2019/01/04/zabbix/";
+    this.page.identifier = "2019/01/04/zabbix/";
+    this.page.title = "zabbix的安装与使用";
+    };
+  NexT.utils.loadComments(document.querySelector('#disqus_thread'), () => {
+    if (window.DISQUS) {
+      DISQUS.reset({
+        reload: true,
+        config: disqus_config
+      });
+    } else {
+      var d = document, s = d.createElement('script');
+      s.src = 'https://tencentadmin.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', '' + +new Date());
+      (d.head || d.body).appendChild(s);
+    }
+  });
+</script>
+
+</body>
+</html>
