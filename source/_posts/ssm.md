@@ -1,3 +1,4 @@
+---
 title: SSM
 date: 2018-03-16 15:13:38
 tags: java
@@ -838,4 +839,6 @@ class|接口上注解
 [](https://www.tianmaying.com/tutorial/spring-mvc-quickstart)
 
 [MyBatis xml 和 dao 层接口组合使用](https://www.cnblogs.com/zhao307/p/5547986.html)
+
+
 

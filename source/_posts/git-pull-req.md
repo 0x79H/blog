@@ -1,3 +1,4 @@
+---
 title: Git 合并两个不同的仓库
 date: 2019-03-13 19:36:43
 tags: git
@@ -15,3 +16,4 @@ git fetch other master
 #git branch -a
 git merge other/master
 ```
+

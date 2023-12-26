@@ -1,3 +1,4 @@
+---
 title: Android安全
 date: 2019-02-22 14:32:48
 tags: [android,Xposed,frida,llvm]
@@ -70,3 +71,4 @@ LLVM和vmp一样,被我加入到了清单列表中.
 理论上可以通过修改android源码来bypass掉,但是又没钱买谷歌亲儿子,又不会做适配.
 mprop真是神器,直接改ro判断,思路真是猥琐至极,是大佬.
 反反调试只知道一些简单的常规的,姿势还是不够多.
+

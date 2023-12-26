@@ -1,3 +1,4 @@
+---
 title: PE结构
 date: 2019-05-27 13:12:26
 tags: [windows,pe]
@@ -92,3 +93,4 @@ typedef struct _IMAGE_RESOURCE_DATA_ENTRY {
 010editor、stud_pe、pe-bear、x96dbg了解下
 
 hwh不动啊，都是waf，当然是选择水一水博客喽😀
+

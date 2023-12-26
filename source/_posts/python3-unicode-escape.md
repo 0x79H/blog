@@ -1,3 +1,4 @@
+---
 title: python3中unicode编码解码
 date: 2019-08-31 15:53:09
 tags: [python,unicode]
@@ -53,3 +54,4 @@ In [15]: x1.encode().decode("unicode_escape").encode("latin1").decode("utf-8")
 Out[15]: '百度一下，你就知道'
 
 ```
+

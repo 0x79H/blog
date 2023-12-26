@@ -1,3 +1,4 @@
+---
 ﻿title: Windows下好用的shell--msys2
 date: 2017-07-15 22:40:26
 tags: [linux,shell,windows，msys2]
@@ -57,3 +58,4 @@ pacman -U man-pages-zh_cn-1.6.3.3-1-any.pkg.tar.xz
 ## 参考链接
 https://wiki.archlinux.org/index.php/Pacman
 https://superuser.com/questions/961699/change-default-shell-on-msys2
+

@@ -1,3 +1,4 @@
+---
 title: qq邮箱三位短id
 date: 2021-06-02 10:55:10
 tags:
@@ -30,3 +31,4 @@ api = "http://mail.qq.com/cgi-bin/register?check_tmpl=add_alias&sid={}&action=fr
 # 三位id可用列表
 <!--more-->
 <script src="https://gist.github.com/0x79H/81422cefb2f3d338c797294fd2de2fca.js"></script>
+

@@ -1,3 +1,4 @@
+---
 ﻿title: Socxel | Pixel Soccer
 date: 2017-07-19 15:41:11
 tags: [Steam,game]
@@ -29,3 +30,4 @@ btw,开了吧`1 vs AI`,摸索了半天都不知道用什么操控.然而我居�
 `Construct`是一个HTML5的游戏引擎,类似于`GameMaker`,但是相比感觉前者更强大一些.类似的我只知道unity3d可以导出为web格式,但是前两者拥有所见即所得的简单编辑模式,只需要动动手拖动一下就可以很轻易的制作一些简单的游戏.简单易用的程度也表现在,我甚至在网上找到了面向14岁+开展的培训班.
 
 顺便一提,[Construct 2](http://store.steampowered.com/app/227240/)居然也在steam商店上架了.
+

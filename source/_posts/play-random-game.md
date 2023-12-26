@@ -1,3 +1,4 @@
+---
 title: 凭本事买的游戏为什么要玩
 date: 2017-07-16 09:22:07
 tags: [Steam,game]
@@ -18,3 +19,4 @@ from os import system as shell
 rgOwnedApps = [10,20,30,40,50,60,.....,635780]
 shell('"C:/Program Files/Internet Explorer/iexplore.exe" \"steam://run/'+str(roll(rgOwnedApps))+'\"')
 ```
+

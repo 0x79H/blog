@@ -1,3 +1,4 @@
+---
 title: 获取DLL的函数地址
 date: 2019-01-08 23:22:56
 tags: [windows,shellcode]
@@ -118,3 +119,4 @@ while (true)
 # <span style="font-size:14px">参考资料</span>
 [InLoadOrderLinks第三个为kernel32](https://bbs.pediy.com/thread-149527.htm)
 没读过不过差不多所有参考资料都有说的0day
+

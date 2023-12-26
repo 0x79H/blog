@@ -1,3 +1,4 @@
+---
 title: esrever-mv
 date: 2019-06-23 18:22:56
 tags: [asm,linux]
@@ -156,3 +157,4 @@ case_0x11, t0__t0, 0       ;------
 
 # 其他
 然而，差不多搞完了才发现作者把writeup都丢到脸上了:[gayhub](https://github.com/Inndy/zzvm)
+

@@ -1,3 +1,4 @@
+---
 title: PWN学习
 date: 2018-12-31 22:53:11
 tags: [security,asm]
@@ -52,3 +53,4 @@ Linux系统有一种叫做PIE(Position-independent executables)的技术，windo
 
 # <span class="_link" style="font-size:14px">参考资料</span>
 [Pwn Overview](https://ctf-wiki.github.io/ctf-wiki/pwn/readme/)
+

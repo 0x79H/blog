@@ -1,3 +1,4 @@
+---
 title: 修复由于WAN_Miniport导致的网络问题
 date: 2016-02-04 13:58:09
 tags: [windows,fix]
@@ -19,3 +20,4 @@ tags: [windows,fix]
 或者
 
 [下载我](http://download.microsoft.com/download/D/9/2/D923C013-E9AD-4BBE-A52C-AC1F16685036/MicrosoftFixit20114.mini.diagcab)
+

@@ -1,3 +1,4 @@
+---
 title: requests的post请求总是以get的方式提交
 date: 2019-04-25 21:08:19
 tags: [python,301,http_code]
@@ -26,3 +27,4 @@ req.content
 如果使用的是Nginx的reweite总会产生301相应.所以这时候需要将post的请求用proxy_pass来代理一下.
 
 至于为啥这个界面会301呢.别问,问就是django.
+

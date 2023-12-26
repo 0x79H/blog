@@ -1,3 +1,4 @@
+---
 title: sql injection
 date: 2018-04-06 20:19:18
 tags: [security,sql]
@@ -148,3 +149,4 @@ xforwardedfor|X-Forwarded-For|
 [Sql中操纵字符串的函数方法](https://mariadb.com/kb/en/library/string-functions/)
 
 [SQLMap Tamper Scripts (SQL Injection and WAF bypass)](https://forum.bugcrowd.com/t/sqlmap-tamper-scripts-sql-injection-and-waf-bypass/423)
+

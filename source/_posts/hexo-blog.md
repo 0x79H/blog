@@ -1,3 +1,4 @@
+---
 title: 搭了个博客
 date: 2015-11-18 05:23:10
 tags: blog
@@ -77,4 +78,6 @@ hexo clean&&hexo g&&hexo g&&hexo d
 使用两次**hexo g**是因为有时生成的主页[有问题](https://github.com/iissnan/hexo-theme-next/issues/482),首页仅显示一篇文章。
 
 最后表示终于**有时间**来干这事了
+
+
 

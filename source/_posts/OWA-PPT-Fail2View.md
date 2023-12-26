@@ -1,3 +1,4 @@
+---
 title: 部署Office Web Apps
 date: 2019-11-08 11:59:03
 tags: [windows,domain]
@@ -63,3 +64,4 @@ rd /s /q "C:\ProgramData\Microsoft\OfficeWebApps\Working\waccache\LocalCacheStor
 [Deploy Office Web Apps Server](https://docs.microsoft.com/en-us/webappsserver/deploy-office-web-apps-server)
 [error0](https://blog.csdn.net/mazhaojuan/article/details/7660657)
 [error1](https://www.wavecoreit.com/blog/serverconfig/office-webapps-server-fails-to-render-powerpoint-in-skype-for-business/)
+

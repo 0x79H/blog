@@ -1,3 +1,4 @@
+---
 title: SEH
 date: 2019-01-16 19:03:10
 tags: [windows,shellcode]
@@ -156,3 +157,5 @@ winseh!_EXCEPTION_RECORD
    +0x010 NumberParameters : Uint4B //# os Parameters
    +0x014 ExceptionInformation : [15] Uint4B
 ```
+
+

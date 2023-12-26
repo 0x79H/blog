@@ -1,3 +1,4 @@
+---
 title: msys2替换ncurses为pdcurses后更新失败
 date: 2019-06-03 15:14:48
 tags: [fix,msys2,windows]
@@ -31,3 +32,5 @@ error: failed to prepare transaction (could not satisfy dependencies)
 ```
 查找资料，发现已将`*-ncurses`与`*-termcap`替换为`*-pdcurses`,但这不是导致错误的原因.导致错误的原因是`ada`与`objc`已经被[弃用](https://github.com/msys2/MINGW-packages/issues/5434#issuecomment-497053126)，需要手动移除`ada`与`objc`.
 `pacman -R --noconfirm mingw-w64-i686-gcc-ada mingw-w64-i686-gcc-objc mingw-w64-x86_64-gcc-ada mingw-w64-x86_64-gcc-objc`,然后`pacman -Syyu`问题解决
+
+
